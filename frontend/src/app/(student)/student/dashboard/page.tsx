@@ -1,7 +1,6 @@
 "use client";
 
 import PageShell from "@/components/layout/PageShell";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,15 +16,13 @@ import {
   Sparkles,
   ChevronRight
 } from "lucide-react";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
 
 export default function StudentDashboard() {
   const stats = [
-    { label: "Syllabus Coverage", value: "68%", sub: "+12.4% this week", icon: BookOpen, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "AI Readiness Score", value: "B+", sub: "Verified for Midterms", icon: Brain, color: "text-purple-600", bg: "bg-purple-50" },
-    { label: "Docs Processed", value: "24", sub: "182 pages analyzed", icon: FileText, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: "Active Streak", value: "5 Days", sub: "Personal Best: 12", icon: Sparkles, color: "text-amber-600", bg: "bg-amber-50" },
+    { label: "Syllabus Coverage", value: "68%", sub: "+12.4% this week", icon: BookOpen, color: "var(--blue)", bg: "rgba(30, 111, 217, 0.15)", modifier: "blue" },
+    { label: "AI Readiness Score", value: "B+", sub: "Verified for Midterms", icon: Brain, color: "var(--teal)", bg: "rgba(13, 148, 136, 0.15)", modifier: "teal" },
+    { label: "Docs Processed", value: "24", sub: "182 pages analyzed", icon: FileText, color: "var(--success)", bg: "rgba(5, 150, 105, 0.15)", modifier: "success" },
+    { label: "Active Streak", value: "5 Days", sub: "Personal Best: 12", icon: Sparkles, color: "var(--gold)", bg: "rgba(217, 119, 6, 0.15)", modifier: "gold" },
   ];
 
   return (
@@ -33,137 +30,136 @@ export default function StudentDashboard() {
       title="Dashboard"
       subtitle="Welcome back, Alex. Your learning engine is primed."
       actions={
-        <div className="flex gap-3">
-          <Button variant="outline" className="rounded-2xl h-11 px-6 font-semibold border-gray-200">
+        <div style={{ display: "flex", gap: "12px" }}>
+          <Button variant="outline" className="btn btn-secondary">
             View Analytics
           </Button>
-          <Button className="rounded-2xl h-11 px-6 font-semibold bg-black hover:bg-gray-900 text-white gap-2">
+          <Button className="btn btn-primary">
             <Plus className="w-4 h-4" />
             Upload Document
           </Button>
         </div>
       }
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-min">
+      <div className="grid-4" style={{ marginBottom: "24px" }}>
         {/* Welcome Block - Full Width */}
-        <div className="lg:col-span-3 bg-blue-600 rounded-3xl p-10 flex flex-col justify-between text-white relative overflow-hidden group">
-          <div className="relative z-10 max-w-lg">
-            <h1 className="text-4xl font-display font-bold leading-tight">
+        <div style={{ gridColumn: "span 3" }} className="card">
+          <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "center", position: "relative", zIndex: 10 }}>
+            <h1 style={{ fontSize: "32px", fontWeight: "bold", lineHeight: 1.2, margin: 0 }}>
               Ready to crush Unit 3? <br />
-              <span className="text-blue-200">Neural Networks are waiting.</span>
+              <span style={{ color: "var(--blueLight)", fontSize: "28px" }}>Neural Networks are waiting.</span>
             </h1>
-            <p className="mt-4 text-blue-100 text-lg font-medium opacity-90">
+            <p style={{ marginTop: "16px", color: "var(--slateLight)", fontSize: "16px", maxWidth: "600px" }}>
               Your overall readiness is B+. Complete today&apos;s 2 practice sets to hit A-.
             </p>
-            <Button className="mt-8 bg-white text-blue-600 hover:bg-blue-50 rounded-2xl h-12 px-8 font-bold gap-2 group">
-              Start Session
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </div>
-          <div className="absolute right-[-5%] bottom-[-10%] opacity-10 group-hover:scale-110 transition-transform duration-700">
-            <Sparkles className="w-64 h-64 text-white" />
+            <div style={{ display: "flex", gap: "16px", marginTop: "24px", paddingTop: "24px" }}>
+              <Button className="btn btn-primary" style={{ padding: "12px 24px" }}>
+                Start Session
+                <ArrowRight className="w-4 h-4" style={{ marginLeft: "8px" }} />
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* AI Quick Assistant */}
-        <Card className="rounded-3xl border-none bg-gray-950 text-white shadow-2xl p-2 h-full">
-          <CardContent className="p-6 h-full flex flex-col">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
+        <div className="card" style={{ display: "flex", flexDirection: "column", height: "100%", background: "var(--navy)" }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
+              <div style={{ width: "40px", height: "40px", borderRadius: "8px", background: "var(--blue)", display: "flex", alignItems: "center", justifyContent: "center", color: "white" }}>
                 <Brain className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm font-bold">Scholar Chat</p>
-                <p className="text-[10px] text-white/40 uppercase tracking-widest">Active Intelligence</p>
+                <p style={{ fontSize: "14px", fontWeight: "bold", margin: 0, color: "white" }}>Scholar Chat</p>
+                <p style={{ fontSize: "10px", color: "var(--blueLight)", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>Active Intelligence</p>
               </div>
             </div>
-            <div className="flex-1 bg-white/5 rounded-2xl p-4 text-xs text-white/70 leading-relaxed italic">
+            <div style={{ flex: 1, background: "rgba(255,255,255,0.05)", borderRadius: "12px", padding: "16px", fontSize: "12px", color: "rgba(255,255,255,0.7)", fontStyle: "italic", lineHeight: 1.5 }}>
               &quot;I noticed you struggled with Backpropagation. Should we generate a 5-minute summary?&quot;
             </div>
-            <div className="mt-4 flex gap-2">
+            <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
               <input
                 placeholder="Ask anything..."
-                className="bg-white/5 border-none rounded-xl px-4 py-2.5 text-xs text-white flex-1 focus:ring-1 focus:ring-blue-500 transition-all outline-none"
+                style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "none", borderRadius: "8px", padding: "10px 16px", fontSize: "12px", color: "white", outline: "none", fontFamily: "inherit" }}
               />
-              <Button size="icon" className="bg-blue-600 hover:bg-blue-700 rounded-xl">
+              <Button size="icon" style={{ background: "var(--blue)", color: "white", border: "none", borderRadius: "8px", width: "40px", height: "40px", flexShrink: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+      </div>
 
-        {/* Stats Row */}
+      {/* Stats Row */}
+      <div className="grid-4" style={{ marginBottom: "24px" }}>
         {stats.map((stat, i) => (
-          <Card key={i} className="rounded-3xl border-gray-100 bg-white hover:shadow-xl hover:shadow-gray-200/50 transition-all group">
-            <CardContent className="p-8">
-              <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110", stat.bg, stat.color)}>
-                <stat.icon className="w-6 h-6" />
-              </div>
-              <p className="text-sm font-semibold text-gray-500">{stat.label}</p>
-              <h2 className="text-3xl font-display font-bold mt-1">{stat.value}</h2>
-              <p className="text-xs font-medium text-gray-400 mt-2">{stat.sub}</p>
-            </CardContent>
-          </Card>
-        ))}
-
-        {/* Pulse Chart Placeholder */}
-        <Card className="lg:col-span-2 rounded-3xl border-gray-100 bg-white p-8">
-          <CardHeader className="p-0 mb-6 flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-xl font-display font-bold">Intelligence Pulse</CardTitle>
-              <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest font-bold">Learning consistency last 14 days</p>
+          <div key={i} className={`stat-card ${stat.modifier}`}>
+            <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: stat.bg, color: stat.color, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px" }}>
+              <stat.icon className="w-6 h-6" />
             </div>
-            <Badge className="bg-blue-50 text-blue-600 border-none rounded-lg px-3 py-1 font-bold">+24%</Badge>
-          </CardHeader>
-          <div className="h-48 w-full bg-gray-50 rounded-2xl flex items-end px-4 py-6 gap-2">
+            <p className="stat-label">{stat.label}</p>
+            <h2 className="stat-value">{stat.value}</h2>
+            <p style={{ fontSize: "12px", color: "var(--slateLight)", margin: 0 }}>{stat.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid-2">
+        {/* Intelligence Pulse Chart Placeholder */}
+        <div className="card">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+            <div>
+              <h2 className="card-title" style={{ margin: 0, fontSize: "20px" }}>Intelligence Pulse</h2>
+              <p style={{ fontSize: "10px", color: "var(--slateLight)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "bold", margin: "4px 0 0" }}>Learning consistency last 14 days</p>
+            </div>
+            <span style={{ fontSize: "12px", fontWeight: "bold", background: "rgba(30, 111, 217, 0.15)", padding: "4px 10px", borderRadius: "8px", color: "var(--blue)" }}>+24%</span>
+          </div>
+          <div style={{ height: "192px", width: "100%", background: "rgba(255,255,255,0.02)", borderRadius: "12px", display: "flex", alignItems: "flex-end", padding: "16px 16px 0", gap: "8px" }}>
             {[40, 60, 45, 90, 65, 80, 50, 70, 85, 95, 60, 75].map((h, i) => (
-              <div key={i} className="flex-1 bg-blue-100 hover:bg-blue-600 rounded-t-lg transition-all" style={{ height: `${h}%` }} />
+              <div key={i} style={{ flex: 1, background: "rgba(30, 111, 217, 0.3)", height: `${h}%`, borderRadius: "8px 8px 0 0", transition: "all 0.2s" }} />
             ))}
           </div>
-        </Card>
+        </div>
 
-        {/* Focus Timer */}
-        <Card className="rounded-3xl border-none bg-blue-50 p-8 flex flex-col justify-between overflow-hidden relative">
-          <div className="relative z-10">
-            <Badge className="bg-blue-200 text-blue-800 border-none mb-4 px-3 py-1 font-bold">FOCUS MODE</Badge>
-            <h3 className="text-2xl font-display font-bold text-blue-900 leading-tight">Deep Work <br />Session</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+          {/* Focus Timer */}
+          <div className="card" style={{ flex: 0, position: "relative", overflow: "hidden", background: "rgba(30, 111, 217, 0.1)" }}>
+            <span style={{ background: "rgba(30, 111, 217, 0.2)", color: "var(--blue)", padding: "4px 10px", borderRadius: "6px", fontSize: "10px", fontWeight: "bold", display: "inline-block", marginBottom: "16px" }}>FOCUS MODE</span>
+            <h3 style={{ fontSize: "24px", fontWeight: "bold", color: "var(--blueLight)", lineHeight: 1.2, margin: 0 }}>Deep Work <br />Session</h3>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "32px" }}>
+              <div style={{ fontSize: "36px", fontFamily: "monospace", fontWeight: "bold", color: "white", letterSpacing: "-1px" }}>25:00</div>
+              <Button size="icon" style={{ background: "var(--blue)", color: "white", borderRadius: "12px", height: "48px", width: "48px", border: "none" }}>
+                <Timer className="w-6 h-6" />
+              </Button>
+            </div>
           </div>
-          <div className="relative z-10 flex items-center justify-between mt-8">
-            <div className="text-3xl font-mono font-bold text-blue-600 tracking-tighter">25:00</div>
-            <Button size="icon" className="bg-blue-600 text-white rounded-2xl h-12 w-12 hover:scale-110 transition-transform">
-              <Timer className="w-6 h-6" />
-            </Button>
-          </div>
-          <Sparkles className="absolute right-[-10%] top-[-10%] w-32 h-32 text-blue-100 opacity-50" />
-        </Card>
 
-        {/* Resource Feed */}
-        <Card className="rounded-3xl border-gray-100 bg-white p-8">
-          <CardHeader className="p-0 mb-6 flex flex-row items-center justify-between">
-            <CardTitle className="text-xl font-display font-bold">Recent Intelligence</CardTitle>
-            <Button variant="ghost" size="sm" className="text-blue-600 font-bold hover:bg-blue-50">See All</Button>
-          </CardHeader>
-          <div className="space-y-4">
-            {[
-              { name: "Unit 3 Flashcards", type: "Generated", icon: Brain, color: "text-purple-600" },
-              { name: "Algorithms Summary", type: "PDF Parse", icon: FileText, color: "text-emerald-600" },
-              { name: "Mock Test #4 Results", type: "Review", icon: CheckCircle2, color: "text-blue-600" },
-            ].map((feed, i) => (
-              <div key={i} className="flex items-center justify-between p-3 rounded-2xl hover:bg-gray-50 transition-colors cursor-pointer group">
-                <div className="flex items-center gap-3">
-                  <div className={cn("w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center group-hover:scale-110 transition-transform", feed.color)}>
-                    <feed.icon className="w-5 h-5" />
+          {/* Resource Feed */}
+          <div className="card" style={{ flex: 1 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h2 className="card-title" style={{ margin: 0, fontSize: "18px" }}>Recent Intelligence</h2>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {[
+                { name: "Unit 3 Flashcards", type: "Generated", icon: Brain, color: "var(--teal)", bg: "rgba(13, 148, 136, 0.1)" },
+                { name: "Algorithms Summary", type: "PDF Parse", icon: FileText, color: "var(--success)", bg: "rgba(5, 150, 105, 0.1)" },
+                { name: "Mock Test #4 Results", type: "Review", icon: CheckCircle2, color: "var(--blue)", bg: "rgba(30, 111, 217, 0.1)" },
+              ].map((feed, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px", borderRadius: "12px", background: "rgba(255,255,255,0.03)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: feed.bg, color: feed.color, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <feed.icon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p style={{ fontSize: "14px", fontWeight: "bold", margin: 0, color: "white" }}>{feed.name}</p>
+                      <p style={{ fontSize: "10px", color: "var(--slateLight)", margin: 0 }}>{feed.type}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-bold">{feed.name}</p>
-                    <p className="text-[10px] text-gray-400 font-medium">{feed.type}</p>
-                  </div>
+                  <ChevronRight className="w-4 h-4" style={{ color: "rgba(255,255,255,0.2)" }} />
                 </div>
-                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-600 transition-colors" />
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </Card>
+        </div>
       </div>
     </PageShell>
   );

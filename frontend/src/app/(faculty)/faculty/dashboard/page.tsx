@@ -1,7 +1,6 @@
 "use client";
 
 import PageShell from "@/components/layout/PageShell";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,14 +16,13 @@ import {
   ChevronRight,
   TrendingDown
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export default function FacultyDashboard() {
   const stats = [
-    { label: "Total Students", value: "142", sub: "+12 this intake", icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Batch Readiness", value: "74%", sub: "-2% vs last week", icon: Zap, color: "text-amber-600", bg: "bg-amber-50" },
-    { label: "Pending Reviews", value: "18", sub: "Avg time: 4.2h", icon: ClipboardList, color: "text-red-600", bg: "bg-red-50" },
-    { label: "Integrity Score", value: "98%", sub: "Plagiarism verified", icon: ShieldCheck, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: "Total Students", value: "142", sub: "+12 this intake", icon: Users, color: "var(--blue)", bg: "rgba(30, 111, 217, 0.15)", modifier: "blue" },
+    { label: "Batch Readiness", value: "74%", sub: "-2% vs last week", icon: Zap, color: "var(--warning)", bg: "rgba(217, 119, 6, 0.15)", modifier: "gold" },
+    { label: "Pending Reviews", value: "18", sub: "Avg time: 4.2h", icon: ClipboardList, color: "var(--danger)", bg: "rgba(220, 38, 38, 0.15)", modifier: "danger" },
+    { label: "Integrity Score", value: "98%", sub: "Plagiarism verified", icon: ShieldCheck, color: "var(--success)", bg: "rgba(5, 150, 105, 0.15)", modifier: "success" },
   ];
 
   return (
@@ -32,151 +30,148 @@ export default function FacultyDashboard() {
       title="Faculty Intelligence"
       subtitle="Overview of CS-101: Introduction to Computer Science"
       actions={
-        <div className="flex gap-3">
-          <Button variant="outline" className="rounded-2xl h-11 px-6 font-semibold border-gray-200">
+        <div style={{ display: "flex", gap: "12px" }}>
+          <Button variant="outline" className="btn btn-secondary">
             Export Analytics
           </Button>
-          <Button className="rounded-2xl h-11 px-6 font-semibold bg-black hover:bg-gray-900 text-white gap-2">
+          <Button className="btn btn-primary">
             <Plus className="w-4 h-4" />
             Add Course Content
           </Button>
         </div>
       }
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-min">
+      <div className="grid-4" style={{ marginBottom: "24px" }}>
         {/* Institutional Overview - Wide */}
-        <div className="lg:col-span-3 bg-gray-900 rounded-3xl p-10 flex flex-col justify-between text-white relative overflow-hidden group">
-          <div className="relative z-10 max-w-lg">
-            <h1 className="text-4xl font-display font-bold leading-tight">
+        <div style={{ gridColumn: "span 3" }} className="card">
+          <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "center" }}>
+            <h1 style={{ fontSize: "32px", fontWeight: "bold", lineHeight: 1.2, margin: 0 }}>
               Batch Performance <br />
-              <span className="text-blue-500 text-3xl">Critical Gaps Detected in Unit 3</span>
+              <span style={{ color: "var(--blueLight)", fontSize: "28px" }}>Critical Gaps Detected in Unit 3</span>
             </h1>
-            <p className="mt-4 text-gray-400 text-lg font-medium">
+            <p style={{ marginTop: "16px", color: "var(--slateLight)", fontSize: "16px", maxWidth: "600px" }}>
               42% of students are struggling with Big O complexity after the recent lecture.
             </p>
-            <div className="flex gap-4 mt-8">
-              <Button className="bg-blue-600 text-white hover:bg-blue-700 rounded-2xl h-12 px-8 font-bold gap-2 group">
+            <div style={{ display: "flex", gap: "16px", marginTop: "24px", paddingTop: "24px" }}>
+              <Button className="btn btn-primary" style={{ padding: "12px 24px" }}>
                 Review Gap Report
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-4 h-4" style={{ marginLeft: "8px" }} />
               </Button>
-              <Button className="bg-white/5 hover:bg-white/10 text-white border-white/10 rounded-2xl h-12 px-8 font-bold">
+              <Button style={{ background: "rgba(255,255,255,0.05)", color: "white", padding: "12px 24px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer", fontWeight: "bold" }}>
                 Automate Remediation
               </Button>
             </div>
           </div>
-          <div className="absolute right-0 bottom-0 opacity-20 pointer-events-none group-hover:scale-105 transition-transform duration-1000">
-            <TrendingUp className="w-80 h-80 text-blue-500" />
-          </div>
         </div>
 
         {/* Content Processing Status */}
-        <Card className="rounded-3xl border-none bg-blue-50 text-blue-900 p-8 h-full">
-          <CardContent className="p-0 h-full flex flex-col">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white">
-                <Zap className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-sm font-bold">Content Engine</p>
-                <p className="text-[10px] text-blue-400 uppercase tracking-widest font-bold">ChaosCleaner Live</p>
+        <div className="card" style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
+            <div style={{ width: "40px", height: "40px", borderRadius: "8px", background: "var(--blue)", display: "flex", alignItems: "center", justifyContent: "center", color: "white" }}>
+              <Zap className="w-5 h-5" />
+            </div>
+            <div>
+              <p style={{ fontSize: "14px", fontWeight: "bold", margin: 0 }}>Content Engine</p>
+              <p style={{ fontSize: "10px", color: "var(--blueLight)", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>ChaosCleaner Live</p>
+            </div>
+          </div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "16px" }}>
+            <div style={{ padding: "12px", background: "rgba(255,255,255,0.05)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <p style={{ fontSize: "12px", fontWeight: "bold", margin: "0 0 8px" }}>Syllabus Mapping</p>
+              <div style={{ width: "100%", background: "rgba(255,255,255,0.1)", height: "6px", borderRadius: "99px" }}>
+                <div style={{ background: "var(--blue)", height: "100%", width: "85%", borderRadius: "99px" }} />
               </div>
             </div>
-            <div className="flex-1 space-y-4">
-              <div className="p-4 bg-white/50 rounded-2xl border border-blue-100">
-                <p className="text-xs font-bold text-blue-800">Syllabus Mapping</p>
-                <div className="w-full bg-blue-200 h-1.5 rounded-full mt-2 overflow-hidden">
-                  <div className="bg-blue-600 h-full w-[85%]" />
-                </div>
-              </div>
-              <div className="p-4 bg-white/50 rounded-2xl border border-blue-100">
-                <p className="text-xs font-bold text-blue-800">Doc Processing</p>
-                <div className="w-full bg-blue-200 h-1.5 rounded-full mt-2 overflow-hidden">
-                  <div className="bg-blue-600 h-full w-[45%]" />
-                </div>
+            <div style={{ padding: "12px", background: "rgba(255,255,255,0.05)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <p style={{ fontSize: "12px", fontWeight: "bold", margin: "0 0 8px" }}>Doc Processing</p>
+              <div style={{ width: "100%", background: "rgba(255,255,255,0.1)", height: "6px", borderRadius: "99px" }}>
+                <div style={{ background: "var(--blue)", height: "100%", width: "45%", borderRadius: "99px" }} />
               </div>
             </div>
-            <p className="mt-6 text-[10px] text-blue-500 font-bold uppercase tracking-widest">3 files in queue</p>
-          </CardContent>
-        </Card>
+          </div>
+          <p style={{ marginTop: "16px", fontSize: "10px", color: "var(--blueLight)", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "1px" }}>3 files in queue</p>
+        </div>
+      </div>
 
-        {/* Stats Row */}
+      {/* Stats Row */}
+      <div className="grid-4" style={{ marginBottom: "24px" }}>
         {stats.map((stat, i) => (
-          <Card key={i} className="rounded-3xl border-gray-100 bg-white hover:shadow-xl hover:shadow-gray-200/50 transition-all group">
-            <CardContent className="p-8">
-              <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110", stat.bg, stat.color)}>
-                <stat.icon className="w-6 h-6" />
-              </div>
-              <p className="text-sm font-semibold text-gray-500">{stat.label}</p>
-              <h2 className="text-3xl font-display font-bold mt-1">{stat.value}</h2>
-              <p className="text-xs font-medium text-gray-400 mt-2">{stat.sub}</p>
-            </CardContent>
-          </Card>
+          <div key={i} className={`stat-card ${stat.modifier}`}>
+            <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: stat.bg, color: stat.color, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px" }}>
+              <stat.icon className="w-6 h-6" />
+            </div>
+            <p className="stat-label">{stat.label}</p>
+            <h2 className="stat-value">{stat.value}</h2>
+            <p style={{ fontSize: "12px", color: "var(--slateLight)", margin: 0 }}>{stat.sub}</p>
+          </div>
         ))}
+      </div>
 
-        {/* Student Performance Grid - Double width */}
-        <Card className="lg:col-span-2 rounded-3xl border-gray-100 bg-white p-8">
-          <CardHeader className="p-0 mb-8 flex flex-row items-center justify-between">
-            <CardTitle className="text-xl font-display font-bold">Batch Insight</CardTitle>
-            <Badge className="bg-gray-50 text-gray-500 border-none font-bold">LIVE FEED</Badge>
-          </CardHeader>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-2xl bg-emerald-50 border border-emerald-100 group cursor-pointer hover:bg-emerald-100 transition-colors">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-emerald-600 shadow-sm transition-transform group-hover:scale-110">
+      <div className="grid-2">
+        {/* Student Performance Grid */}
+        <div className="card">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+            <h2 className="card-title" style={{ margin: 0, fontSize: "20px" }}>Batch Insight</h2>
+            <span style={{ fontSize: "11px", fontWeight: "bold", background: "rgba(255,255,255,0.1)", padding: "4px 8px", borderRadius: "6px", color: "var(--slateLight)" }}>LIVE FEED</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", background: "rgba(5, 150, 105, 0.1)", borderRadius: "12px", border: "1px solid rgba(5, 150, 105, 0.2)", cursor: "pointer" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: "var(--success)", display: "flex", alignItems: "center", justifyContent: "center", color: "white" }}>
                   <TrendingUp className="w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-emerald-900">Sorting Algorithms</p>
-                  <p className="text-xs text-emerald-600 font-medium tracking-tight">88% Mastering this concept</p>
+                  <p style={{ fontSize: "14px", fontWeight: "bold", color: "var(--success)", margin: "0 0 4px" }}>Sorting Algorithms</p>
+                  <p style={{ fontSize: "12px", color: "var(--success)", opacity: 0.8, margin: 0 }}>88% Mastering this concept</p>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-emerald-300" />
+              <ChevronRight className="w-5 h-5" style={{ color: "var(--success)" }} />
             </div>
 
-            <div className="flex items-center justify-between p-4 rounded-2xl bg-red-50 border border-red-100 group cursor-pointer hover:bg-red-100 transition-colors">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-red-600 shadow-sm transition-transform group-hover:scale-110">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", background: "rgba(220, 38, 38, 0.1)", borderRadius: "12px", border: "1px solid rgba(220, 38, 38, 0.2)", cursor: "pointer" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: "var(--danger)", display: "flex", alignItems: "center", justifyContent: "center", color: "white" }}>
                   <TrendingDown className="w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-red-900">Big O Complexity</p>
-                  <p className="text-xs text-red-600 font-medium tracking-tight">42% Struggling with patterns</p>
+                  <p style={{ fontSize: "14px", fontWeight: "bold", color: "var(--danger)", margin: "0 0 4px" }}>Big O Complexity</p>
+                  <p style={{ fontSize: "12px", color: "var(--danger)", opacity: 0.8, margin: 0 }}>42% Struggling with patterns</p>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-red-300" />
+              <ChevronRight className="w-5 h-5" style={{ color: "var(--danger)" }} />
             </div>
           </div>
-        </Card>
+        </div>
 
         {/* Recent Activity Log */}
-        <Card className="lg:col-span-2 rounded-3xl border-gray-100 bg-white p-8 overflow-hidden relative">
-          <CardHeader className="p-0 mb-6">
-            <CardTitle className="text-xl font-display font-bold">Activity Intelligence</CardTitle>
-          </CardHeader>
-          <div className="space-y-4">
+        <div className="card">
+          <div style={{ marginBottom: "24px" }}>
+            <h2 className="card-title" style={{ margin: 0, fontSize: "20px" }}>Activity Intelligence</h2>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             {[
-              { doc: "midterm_exam_2024.pdf", action: "Plagiarism analysis finished", time: "2m ago", status: "Secure", icon: ShieldCheck, color: "text-emerald-500" },
-              { doc: "unit3_slides.pptx", action: "Concept mapping completed", time: "15m ago", status: "Mapped", icon: TrendingUp, color: "text-blue-500" },
-              { doc: "student_submission_12.zip", action: "Code calibration flagged", time: "1h ago", status: "Review", icon: AlertCircle, color: "text-amber-500" },
+              { doc: "midterm_exam_2024.pdf", action: "Plagiarism analysis finished", time: "2m ago", status: "Secure", icon: ShieldCheck, color: "var(--success)", bg: "rgba(5, 150, 105, 0.15)" },
+              { doc: "unit3_slides.pptx", action: "Concept mapping completed", time: "15m ago", status: "Mapped", icon: TrendingUp, color: "var(--blue)", bg: "rgba(30, 111, 217, 0.15)" },
+              { doc: "student_submission_12.zip", action: "Code calibration flagged", time: "1h ago", status: "Review", icon: AlertCircle, color: "var(--warning)", bg: "rgba(217, 119, 6, 0.15)" },
             ].map((log, i) => (
-              <div key={i} className="flex items-center justify-between py-1 group cursor-default">
-                <div className="flex items-center gap-4">
-                  <div className={cn("w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center", log.color)}>
+              <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                  <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: log.bg, color: log.color, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <log.icon className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-900 truncate max-w-[200px]">{log.doc}</p>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest">{log.action}</p>
+                    <p style={{ fontSize: "14px", fontWeight: "bold", color: "white", margin: "0 0 4px", maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{log.doc}</p>
+                    <p style={{ fontSize: "10px", color: "var(--slateLight)", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>{log.action}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <Badge className="bg-gray-50 text-gray-600 border-none font-bold text-[10px]">{log.status}</Badge>
-                  <p className="text-[10px] text-gray-300 mt-1 font-bold">{log.time}</p>
+                <div style={{ textAlign: "right" }}>
+                  <span style={{ fontSize: "10px", fontWeight: "bold", background: "rgba(255,255,255,0.1)", padding: "4px 8px", borderRadius: "6px", color: "var(--slateLight)", display: "inline-block", marginBottom: "4px" }}>{log.status}</span>
+                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", fontWeight: "bold", margin: 0 }}>{log.time}</p>
                 </div>
               </div>
             ))}
           </div>
-        </Card>
+        </div>
       </div>
     </PageShell>
   );

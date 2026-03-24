@@ -11,22 +11,22 @@ interface PageShellProps {
 
 export default function PageShell({ title, subtitle, actions, children }: PageShellProps) {
   return (
-    <div className="animate-fade-in px-2">
-      <div className="flex items-center justify-between mb-10">
-        <div>
-          <h1 className="text-4xl font-display font-bold text-gray-900 tracking-tight">{title}</h1>
+    <div className="main-content">
+      <div className="topbar">
+        <div style={{ flex: 1 }}>
+          <div className="topbar-title">{title}</div>
           {subtitle && (
-            <p className="text-gray-500 mt-2 font-medium">{subtitle}</p>
+            <div className="topbar-meta">{subtitle}</div>
           )}
         </div>
         {actions && (
-          <div className="flex items-center gap-3">
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
             {actions}
           </div>
         )}
       </div>
 
-      <div className="space-y-6">
+      <div className="page-content">
         {children}
       </div>
     </div>

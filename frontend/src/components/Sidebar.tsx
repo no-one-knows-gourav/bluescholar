@@ -105,40 +105,37 @@ export default function Sidebar({ role }: SidebarProps) {
   }
 
   return (
-    <aside className="sidebar bg-[#010101] border-r border-white/5 flex flex-col h-screen sticky top-0">
-      <div className="p-10 mb-4">
-        <h2 className="text-2xl font-display font-bold text-white tracking-tight">
-          Blue<span className="text-blue-500">Scholar</span>
-        </h2>
-        <p className="text-[10px] uppercase tracking-widest text-white/40 mt-1 font-medium italic">
-          {role === "faculty" ? "Faculty Intelligence" : "Academic Intelligence"}
-        </p>
+    <aside className="sidebar">
+      <div className="sidebar-logo">
+        <div className="logo-mark">
+          <div className="logo-icon">BS</div>
+          <div>
+            <div className="logo-text">BlueScholar</div>
+            <div className="logo-sub">
+              {role === "faculty" ? "Faculty Intelligence" : "Academic Intelligence"}
+            </div>
+          </div>
+        </div>
       </div>
 
-      <nav className="flex-1 px-6 space-y-10 overflow-y-auto overflow-x-hidden pb-10">
+      <nav style={{ flex: 1, overflowY: "auto", padding: "12px 16px" }}>
         {nav.map((section) => (
-          <div key={section.section} className="space-y-4">
-            <div className="px-4 text-[10px] font-bold uppercase tracking-widest text-white/20">
+          <div key={section.section} className="nav-section">
+            <div className="nav-section-label">
               {section.section}
             </div>
-            <div className="space-y-2">
+            <div>
               {section.links.map((link) => {
                 const isActive = pathname === link.href;
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={cn(
-                      "flex items-center gap-4 px-5 py-3 rounded-xl text-sm font-medium transition-all duration-200 group",
-                      isActive
-                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                        : "text-white/50 hover:text-white hover:bg-white/5"
-                    )}
+                    className={cn("nav-item", isActive && "active")}
                   >
-                    <link.icon className={cn(
-                      "w-4 h-4 transition-transform duration-200",
-                      isActive ? "scale-110" : "group-hover:scale-110"
-                    )} />
+                    <div className="nav-icon">
+                      <link.icon size={16} />
+                    </div>
                     {link.label}
                   </Link>
                 );
@@ -148,15 +145,16 @@ export default function Sidebar({ role }: SidebarProps) {
         ))}
       </nav>
 
-      <div className="p-4 mt-auto border-t border-white/5">
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium text-white/50 hover:text-white hover:bg-white/5 transition-all duration-200"
-        >
-          <LogOut className="w-4 h-4" />
-          Sign Out
-        </button>
-      </div>
+      <button onClick={handleSignOut} className="sidebar-user nav-item">
+        <div className="user-avatar" style={{ background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}>
+          <LogOut size={14} />
+        </div>
+        <div className="user-info">
+          <div className="user-name">Sign Out</div>
+          <div className="user-role">Log out of account</div>
+        </div>
+      </button>
     </aside>
   );
 }
+

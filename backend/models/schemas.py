@@ -104,6 +104,49 @@ class ChatMessage(BaseModel):
     content: str
 
 
+# ─── DocDoubt ───────────────────────────────────────────────
+
+class DoubtRequest(BaseModel):
+    message: str
+    conversation_id: str | None = None
+
+
+class DoubtSourceCitation(BaseModel):
+    filename: str
+    page: int | str | None = None
+    score: float
+    text_preview: str = ""
+    source_type: str = "note"
+
+
+# ─── LectureDigest ─────────────────────────────────────────
+
+class DigestKeyConcept(BaseModel):
+    concept: str
+    explanation: str
+
+
+class DigestDefinition(BaseModel):
+    term: str
+    definition: str
+
+
+class DigestFormula(BaseModel):
+    name: str
+    formula: str
+    context: str = ""
+
+
+class DigestResponse(BaseModel):
+    title: str = ""
+    summary: str = ""
+    key_concepts: list[DigestKeyConcept] = []
+    definitions: list[DigestDefinition] = []
+    formulas: list[DigestFormula] = []
+    review_questions: list[str] = []
+    error: str | None = None
+
+
 # ─── Mocks ──────────────────────────────────────────────────
 
 class MockGenerateResponse(BaseModel):

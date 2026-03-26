@@ -1305,3 +1305,232 @@ select,
 textarea {
   font-family: 'Instrument Sans', sans-serif;
 }
+
+/* ═══ DOCDOUBT LAYOUT ═══════════════════════════════════════ */
+
+.doubt-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 16px;
+  height: calc(100vh - 200px);
+}
+
+.doubt-chat {
+  min-width: 0;
+}
+
+.doubt-sources {
+  min-width: 0;
+}
+
+.doubt-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  text-align: center;
+  height: 100%;
+}
+
+.doubt-empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: rgba(30, 111, 217, 0.15);
+  color: var(--blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.doubt-empty-state h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.doubt-empty-state p {
+  font-size: 13px;
+  color: var(--slateLight);
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+.doubt-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+  justify-content: center;
+}
+
+.doubt-suggestion {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--slateLight);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'Instrument Sans', sans-serif;
+}
+
+.doubt-suggestion:hover {
+  border-color: var(--blue);
+  color: white;
+  background: rgba(30, 111, 217, 0.1);
+}
+
+/* Citations */
+.doubt-citations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.citation-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(30, 111, 217, 0.15);
+  color: var(--blueLight);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.citation-page {
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+/* Source Cards */
+.source-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.source-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.source-filename {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+}
+
+.source-score {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--success);
+  background: rgba(5, 150, 105, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.source-preview {
+  font-size: 11px;
+  color: var(--slateLight);
+  line-height: 1.5;
+  margin-top: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ═══ SYLLABUS MAP ══════════════════════════════════════════ */
+
+.syllabus-unit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px 20px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.12s;
+  font-family: 'Instrument Sans', sans-serif;
+  text-align: left;
+}
+
+.syllabus-unit-header:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.syllabus-unit-num {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(30, 111, 217, 0.15);
+  color: var(--blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.syllabus-topics {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 8px 20px 12px;
+}
+
+.syllabus-topic {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0 10px 48px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.syllabus-topic:last-child {
+  border-bottom: none;
+}
+
+/* Badges for coverage (dark theme overrides) */
+.badge-green {
+  background: rgba(5, 150, 105, 0.2);
+  color: #34d399;
+}
+
+.badge-amber {
+  background: rgba(217, 119, 6, 0.2);
+  color: #fbbf24;
+}
+
+.badge-red {
+  background: rgba(220, 38, 38, 0.2);
+  color: #f87171;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .doubt-layout {
+    grid-template-columns: 1fr;
+  }
+  .doubt-sources {
+    display: none;
+  }
+}

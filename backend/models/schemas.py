@@ -147,15 +147,64 @@ class DigestResponse(BaseModel):
     error: str | None = None
 
 
-# ─── Mocks ──────────────────────────────────────────────────
+# ─── QuestionForge ────────────────────────────────────────
+
+class ForgedQuestion(BaseModel):
+    question: str
+    question_type: str  # MCQ | short_answer | long_answer | numerical
+    bloom_level: str    # remember | understand | apply | analyze | evaluate | create
+    marks: int
+    model_answer: str
+    topic: str
+    options: list[str] | None = None  # MCQ only
+    user_id: str | None = None
+    institution_id: str | None = None
+    source_doc_id: str | None = None
+
+
+class ForgeResponse(BaseModel):
+    questions_generated: int
+    doc_id: str
+    questions: list[ForgedQuestion]
+    error: str | None = None
+
+
+class QuestionListResponse(BaseModel):
+    questions: list[ForgedQuestion]
+    total: int
+
+
+# ─── SmartMock ─────────────────────────────────────────────
 
 class MockGenerateResponse(BaseModel):
-    mock_id: str
-    pdf_url: str
+    mock_id: str | None = None
+    pdf_url: str | None = None
+    questions: list[dict] = []
+    error: str | None = None
 
 
 class MockSubmitRequest(BaseModel):
     answers: dict[str, str]  # question_id -> answer_text
+
+
+# ─── PaperPatternMiner ──────────────────────────────────────
+
+class IngestPaperRequest(BaseModel):
+    paper_text: str
+    year: int
+
+
+class PatternMinerResponse(BaseModel):
+    topic_frequency: dict[str, int] = {}
+    unit_marks_distribution: dict[str, int] = {}
+    question_type_breakdown: dict[str, int] = {}
+    yearly_trends: dict[str, dict] = {}
+    total_questions: int = 0
+
+
+class IngestPaperResponse(BaseModel):
+    questions_extracted: int
+    questions: list[dict] = []
 
 
 # ─── Exams ──────────────────────────────────────────────────

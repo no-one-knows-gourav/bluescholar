@@ -119,6 +119,17 @@ async def _process_async(file_key: str, user_id: str, institution_id: str, doc_t
         from engines.ace.syllabus_mapper import syllabus_mapper
         await syllabus_mapper.parse(text, institution_id)
 
+    # 8. If student note / courseware, enqueue QuestionForge asynchronously
+    #    We pass the file_key as a stand-in for doc_id until the Supabase
+    #    document record ID is threaded through. Swap to the real UUID once
+    #    the Supabase insert result is surfaced from the upload router.
+    if doc_type in ("student_note", "courseware"):
+        forge_questions_for_doc.delay(
+            doc_id=file_key,
+            user_id=user_id,
+            institution_id=institution_id,
+        )
+
     return {"status": "ready", "chunks": count, "collection": collection}
 
 
@@ -135,3 +146,29 @@ def process_document(self, file_key: str, user_id: str, institution_id: str, doc
         return result
     except Exception as exc:
         self.retry(exc=exc, countdown=30)
+
+
+async def _forge_async(doc_id: str, user_id: str, institution_id: str) -> dict:
+    """Async helper for the forge Celery task."""
+    from engines.ace.question_forge import question_forge
+    return await question_forge.forge_from_document(
+        doc_id=doc_id,
+        user_id=user_id,
+        institution_id=institution_id,
+    )
+
+
+@celery_app.task(name="forge_questions_for_doc", bind=True, max_retries=2)
+def forge_questions_for_doc(self, doc_id: str, user_id: str, institution_id: str):
+    """Celery task: generate Bloom's-tagged questions for an ingested document.
+
+    Triggered automatically after process_document completes for student notes
+    and courseware. Can also be called manually from the API.
+    """
+    try:
+        result = asyncio.run(
+            _forge_async(doc_id, user_id, institution_id)
+        )
+        return result
+    except Exception as exc:
+        self.retry(exc=exc, countdown=60)

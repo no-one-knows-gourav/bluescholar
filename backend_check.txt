@@ -1,0 +1,36 @@
+﻿STATUS | MODULE | ERROR
+OK | config | 
+ERR | auth | No module named 'jose'
+ERR | core.llm | No module named 'anthropic'
+OK | core.embeddings | 
+ERR | core.vector | No module named 'qdrant_client'
+ERR | core.storage | No module named 'boto3'
+OK | core.chunker | 
+OK | models.schemas | 
+ERR | engines.ace.chaos_cleaner | No module named 'boto3'
+ERR | engines.ace.lecture_digest | No module named 'anthropic'
+ERR | engines.ace.paper_pattern_miner | No module named 'anthropic'
+ERR | engines.ace.question_forge | No module named 'anthropic'
+ERR | engines.ace.syllabus_mapper | No module named 'anthropic'
+ERR | engines.ape.readiness | No module named 'qdrant_client'
+OK | engines.ape.revision_clock | 
+ERR | engines.ape.smart_mock | No module named 'qdrant_client'
+OK | engines.ape.study_time_predictor | 
+OK | engines.ape.weak_spotter | 
+ERR | engines.eie.handwritten_evaluator | No module named 'anthropic'
+OK | engines.eie.plague_scope | 
+ERR | engines.iae.difficulty_calibrator | No module named 'anthropic'
+ERR | engines.iae.gap_finder | No module named 'qdrant_client'
+OK | engines.iae.report_weaver | 
+ERR | engines.lre.auto_researcher | No module named 'anthropic'
+ERR | engines.lre.doc_doubt | No module named 'anthropic'
+ERR | engines.lre.memory_tutor | No module named 'anthropic'
+ERR | workers.celery_app | No module named 'celery'
+ERR | workers.tasks.grading | No module named 'celery'
+ERR | workers.tasks.ingest | No module named 'celery'
+ERR | workers.tasks.mock_gen | No module named 'celery'
+ERR | workers.tasks.reporting | No module named 'celery'
+ERR | routers.student | No module named 'jose'
+ERR | routers.faculty | No module named 'jose'
+ERR | routers.uploads | No module named 'jose'
+ERR | main | No module named 'jose'

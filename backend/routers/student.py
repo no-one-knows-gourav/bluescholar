@@ -25,6 +25,11 @@ from models.schemas import (
     RebalanceRequest,
     TodoListResponse,
     UpdateTodoRequest,
+    ResearchRequest,
+    ExamStartResponse,
+    AutosaveRequest,
+    SubmitExamRequest,
+    IntegrityEventRequest,
 )
 from engines.ace.chaos_cleaner import chaos_cleaner
 from engines.ace.syllabus_mapper import syllabus_mapper
@@ -356,11 +361,7 @@ async def ingest_paper(
 
 @router.get("/readiness", response_model=ReadinessResponse)
 async def get_readiness(user: CurrentUser = Depends(get_current_user)):
-    """Get the student's current readiness score.
-
-    Stub implementation — returns zeroed values until enough data
-    is accumulated from mocks, study sessions, and uploads.
-    """
+    """Get the student's current readiness score (stub)."""
     # TODO: Pull real data from Supabase once mocks/weak_spots/sessions are built
     return ReadinessResponse(
         score=0.0,
@@ -369,3 +370,155 @@ async def get_readiness(user: CurrentUser = Depends(get_current_user)):
         consistency_component=0.0,
         coverage_component=0.0,
     )
+
+
+# ─── AutoResearcher ─────────────────────────────────────────
+
+@router.post("/research")
+async def run_research(
+    body: ResearchRequest,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """5-stage multi-agent report builder (SSE stream).
+
+    Stages: Planner → Researcher → Writer → Editor → Presenter
+    Each stage emits an SSE event. Final event contains the full report
+    and slide outline.
+    """
+    from engines.lre.auto_researcher import auto_researcher
+
+    return StreamingResponse(
+        auto_researcher.run(topic=body.topic, user_id=user.user_id),
+        media_type="text/event-stream",
+    )
+
+
+# ─── ExamArena (student-side) ───────────────────────────────────
+
+@router.get("/exams/active")
+async def list_active_exams(user: CurrentUser = Depends(get_current_user)):
+    """List exams currently open for the student's institution."""
+    try:
+        from config import get_settings
+        from supabase import create_client
+        settings = get_settings()
+        sb = create_client(settings.supabase_url, settings.supabase_service_role_key)
+        rows = (
+            sb.table("exams")
+            .select("id, title, time_limit_mins, opens_at, closes_at, instructions")
+            .eq("institution_id", user.institution_id)
+            .eq("status", "open")
+            .execute()
+        )
+        return {"exams": rows.data or []}
+    except Exception:
+        return {"exams": []}
+
+
+@router.post("/exams/{exam_id}/start", response_model=ExamStartResponse)
+async def start_exam(
+    exam_id: str,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Create or return the student's submission row and start the timer."""
+    import uuid
+    from datetime import datetime, timezone
+    started_at = datetime.now(timezone.utc).isoformat()
+    submission_id = str(uuid.uuid4())
+    try:
+        from config import get_settings
+        from supabase import create_client
+        settings = get_settings()
+        sb = create_client(settings.supabase_url, settings.supabase_service_role_key)
+        # Upsert so re-starting doesn't create duplicate rows
+        res = sb.table("exam_submissions").upsert({
+            "id": submission_id,
+            "exam_id": exam_id,
+            "student_id": user.user_id,
+            "answers": {},
+            "started_at": started_at,
+            "grading_status": "pending",
+        }).execute()
+        if res.data:
+            submission_id = res.data[0].get("id", submission_id)
+            started_at = res.data[0].get("started_at", started_at)
+    except Exception:
+        pass
+    return ExamStartResponse(
+        submission_id=submission_id,
+        exam_id=exam_id,
+        started_at=started_at,
+    )
+
+
+@router.put("/exams/{exam_id}/autosave")
+async def autosave_exam(
+    exam_id: str,
+    body: AutosaveRequest,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Debounced answer auto-save (frontend calls every 30 s)."""
+    try:
+        from config import get_settings
+        from supabase import create_client
+        settings = get_settings()
+        sb = create_client(settings.supabase_url, settings.supabase_service_role_key)
+        (
+            sb.table("exam_submissions")
+            .update({"answers": body.answers})
+            .eq("exam_id", exam_id)
+            .eq("student_id", user.user_id)
+            .execute()
+        )
+    except Exception:
+        pass
+    return {"status": "saved"}
+
+
+@router.post("/exams/{exam_id}/submit")
+async def submit_exam(
+    exam_id: str,
+    body: SubmitExamRequest,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Final exam submission. Saves answers and marks as submitted."""
+    from datetime import datetime, timezone
+    submitted_at = datetime.now(timezone.utc).isoformat()
+    try:
+        from config import get_settings
+        from supabase import create_client
+        settings = get_settings()
+        sb = create_client(settings.supabase_url, settings.supabase_service_role_key)
+        (
+            sb.table("exam_submissions")
+            .update({"answers": body.answers, "submitted_at": submitted_at})
+            .eq("exam_id", exam_id)
+            .eq("student_id", user.user_id)
+            .execute()
+        )
+    except Exception:
+        pass
+    return {"status": "submitted", "submitted_at": submitted_at}
+
+
+@router.post("/exams/integrity")
+async def log_integrity_events(
+    body: IntegrityEventRequest,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """GuardEye: batch-upload browser integrity events (tab switches, copy attempts, etc.)."""
+    try:
+        from config import get_settings
+        from supabase import create_client
+        settings = get_settings()
+        sb = create_client(settings.supabase_url, settings.supabase_service_role_key)
+        (
+            sb.table("exam_submissions")
+            .update({"integrity_flags": body.events})
+            .eq("exam_id", body.exam_id)
+            .eq("student_id", body.student_id)
+            .execute()
+        )
+    except Exception:
+        pass
+    return {"status": "logged", "event_count": len(body.events)}

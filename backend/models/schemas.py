@@ -324,3 +324,78 @@ class ReadinessResponse(BaseModel):
     gap_component: float
     consistency_component: float
     coverage_component: float
+
+
+# ─── AutoResearcher ─────────────────────────────────────────
+
+class ResearchRequest(BaseModel):
+    topic: str
+
+
+# ─── ExamArena (student-side) ────────────────────────────────
+
+class ExamStartResponse(BaseModel):
+    submission_id: str
+    exam_id: str
+    started_at: str
+
+
+class AutosaveRequest(BaseModel):
+    answers: dict[str, str]  # question_id → answer_text
+
+
+class SubmitExamRequest(BaseModel):
+    answers: dict[str, str]  # final answers
+
+
+class IntegrityEventRequest(BaseModel):
+    exam_id: str
+    student_id: str
+    events: list[dict]
+
+
+# ─── PlagueScope ────────────────────────────────────────────
+
+class FlaggedPair(BaseModel):
+    student_a: str
+    student_b: str
+    similarity: float
+
+
+class PlagueScopeResponse(BaseModel):
+    student_ids: list[str]
+    matrix: list[list[float]]
+    flagged_pairs: list[FlaggedPair]
+    threshold: float
+
+
+# ─── GapFinder ──────────────────────────────────────────────
+
+class GapItem(BaseModel):
+    topic: str
+    unit: int | None = None
+    gap_type: str
+    weightage: int | None = None
+    avg_mock_score: float | None = None
+    courseware_coverage: int
+    exam_frequency: int
+
+
+class GapFinderResponse(BaseModel):
+    gaps: list[GapItem]
+    total_topics: int
+
+
+# ─── HandwrittenEvaluator ────────────────────────────────────
+
+class ExamQuestionPayload(BaseModel):
+    question_id: str
+    question_text: str
+    marks: int
+    model_answer: str
+    order_index: int
+
+
+class EvaluateRequest(BaseModel):
+    image_keys: list[str]   # R2 keys of scanned script pages
+    questions: list[ExamQuestionPayload]

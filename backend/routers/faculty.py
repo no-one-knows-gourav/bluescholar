@@ -14,6 +14,7 @@ from models.schemas import (
     ApproveSubmissionRequest,
     CalibrateRequest,
     CalibrateResponse,
+    GradeAsyncResponse,
 )
 
 router = APIRouter()
@@ -186,6 +187,35 @@ async def evaluate_script(
     )
     total = sum(r.get("marks_awarded", 0) for r in results)
     return {"exam_id": exam_id, "student_id": student_id, "total_score": total, "results": results}
+
+
+@router.post("/exams/{exam_id}/grade-async/{student_id}", response_model=GradeAsyncResponse)
+async def grade_script_async(
+    exam_id: str,
+    student_id: str,
+    body: EvaluateRequest,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Enqueue handwritten script OCR+grading as a Celery task.
+
+    Returns immediately with a task ID. The worker loads questions from
+    exam_questions_map, OCRs the pages, and saves provisional grades.
+    Faculty can then review via GET /faculty/exams/{id}/submissions
+    and approve via POST /faculty/submissions/{id}/approve.
+    """
+    from workers.tasks.grading import grade_handwritten_script
+    task = grade_handwritten_script.delay(
+        exam_id=exam_id,
+        student_id=student_id,
+        institution_id=user.institution_id or "",
+        image_keys=body.image_keys,
+    )
+    return GradeAsyncResponse(
+        task_id=task.id,
+        status="queued",
+        exam_id=exam_id,
+        student_id=student_id,
+    )
 
 
 # ─── PlagueScope ───────────────────────────────────────────────────────────

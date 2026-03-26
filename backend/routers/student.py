@@ -13,6 +13,7 @@ from models.schemas import (
     ForgeResponse,
     QuestionListResponse,
     MockGenerateResponse,
+    MockAsyncResponse,
     IngestPaperRequest,
     IngestPaperResponse,
     PatternMinerResponse,
@@ -30,6 +31,7 @@ from models.schemas import (
     AutosaveRequest,
     SubmitExamRequest,
     IntegrityEventRequest,
+    StudyTimePredictorResponse,
 )
 from engines.ace.chaos_cleaner import chaos_cleaner
 from engines.ace.syllabus_mapper import syllabus_mapper
@@ -41,6 +43,7 @@ from engines.ace.paper_pattern_miner import paper_pattern_miner
 from engines.lre.memory_tutor import memory_tutor
 from engines.ape.weak_spotter import weak_spotter
 from engines.ape.revision_clock import revision_clock
+from engines.ape.study_time_predictor import study_time_predictor
 
 router = APIRouter()
 
@@ -395,6 +398,68 @@ async def run_research(
     )
 
 
+# ─── AutoResearcher report download (DOCX) ────────────────────────────
+
+@router.get("/research/{report_id}/download")
+async def download_research_report(
+    report_id: str,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Download an AutoResearcher report as a .docx file.
+
+    Fetches the saved Markdown report from Supabase, converts it to
+    a Word document via python-docx, and streams the file back.
+    """
+    from fastapi import HTTPException
+    from fastapi.responses import Response
+    from engines.lre.auto_researcher import auto_researcher
+
+    report = await auto_researcher.get_report(report_id, user.user_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found.")
+
+    docx_bytes = _markdown_to_docx(report["report_md"], report.get("topic", "Research Report"))
+    filename = f"bluescholar_report_{report_id[:8]}.docx"
+    return Response(
+        content=docx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+def _markdown_to_docx(markdown_text: str, title: str) -> bytes:
+    """Convert Markdown text to DOCX bytes using python-docx."""
+    from io import BytesIO
+    try:
+        from docx import Document
+        from docx.shared import Pt
+
+        doc = Document()
+        doc.core_properties.title = title
+
+        # Title
+        doc.add_heading(title, level=0)
+
+        for line in markdown_text.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("## "):
+                doc.add_heading(stripped[3:], level=2)
+            elif stripped.startswith("# "):
+                doc.add_heading(stripped[2:], level=1)
+            elif stripped.startswith(("- ", "* ")):
+                p = doc.add_paragraph(stripped[2:], style="List Bullet")
+            elif stripped:
+                doc.add_paragraph(stripped)
+            else:
+                doc.add_paragraph("")
+
+        buf = BytesIO()
+        doc.save(buf)
+        return buf.getvalue()
+    except Exception:
+        return b""  # fallback: empty bytes
+
+
 # ─── ExamArena (student-side) ───────────────────────────────────
 
 @router.get("/exams/active")
@@ -572,3 +637,41 @@ async def get_mock(
         return row.data[0] if row.data else {"error": "Mock not found"}
     except Exception:
         return {"error": "Could not fetch mock"}
+
+
+# ─── Async Mock Generation ─────────────────────────────────────────
+
+@router.post("/mock/generate-async", response_model=MockAsyncResponse)
+async def generate_mock_async(
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Enqueue mock paper generation as a Celery task.
+
+    Returns immediately with a task ID. Poll GET /student/mock/{mock_id}
+    to check when the paper is ready (status will change from 'pending').
+    Prefer this endpoint for larger question banks where generation may take
+    several seconds.
+    """
+    from workers.tasks.mock_gen import generate_mock_paper
+    task = generate_mock_paper.delay(
+        user_id=user.user_id,
+        institution_id=user.institution_id or "",
+    )
+    return MockAsyncResponse(task_id=task.id, status="queued")
+
+
+# ─── StudyTimePredictor ──────────────────────────────────────────────
+
+@router.get("/study-windows", response_model=StudyTimePredictorResponse)
+async def get_study_windows(
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Return the student's predicted peak study hours.
+
+    Analyses chat, todo, and mock timestamps to surface the hours of day
+    when the student is most active. Used by RevisionClock for scheduling.
+    """
+    result = await study_time_predictor.predict(user_id=user.user_id)
+    # Convert int keys to str for Pydantic dict[str, int]
+    result["hour_distribution"] = {str(k): v for k, v in result["hour_distribution"].items()}
+    return StudyTimePredictorResponse(**result)

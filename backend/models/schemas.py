@@ -316,16 +316,6 @@ class UpdateTodoRequest(BaseModel):
     status: str
 
 
-# ─── Readiness ──────────────────────────────────────────────
-
-class ReadinessResponse(BaseModel):
-    score: float
-    mock_component: float
-    gap_component: float
-    consistency_component: float
-    coverage_component: float
-
-
 # ─── AutoResearcher ─────────────────────────────────────────
 
 class ResearchRequest(BaseModel):
@@ -426,3 +416,29 @@ class CalibrateResponse(BaseModel):
     bloom_distribution: dict[str, float]
     total_questions: int
     recommended_adjustments: list[str]
+
+
+# ─── StudyTimePredictor ──────────────────────────────────────
+
+class StudyTimePredictorResponse(BaseModel):
+    hour_distribution: dict[str, int]
+    peak_hours: list[int]
+    peak_windows: list[str]
+    data_points: int
+
+
+# ─── GradeAsyncResponse ──────────────────────────────────────
+
+class GradeAsyncResponse(BaseModel):
+    task_id: str
+    status: str
+    exam_id: str
+    student_id: str
+
+
+# ─── MockAsyncResponse ───────────────────────────────────────
+
+class MockAsyncResponse(BaseModel):
+    task_id: str
+    status: str
+    message: str = "Mock paper is being generated. Poll GET /student/mock/{mock_id} for readiness."

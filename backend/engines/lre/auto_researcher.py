@@ -212,6 +212,28 @@ class AutoResearcher:
         except Exception:
             pass
 
+    async def get_report(self, report_id: str, user_id: str) -> dict | None:
+        """Fetch a saved research report from Supabase.
+
+        Returns the full report dict or None if not found / not owned by user.
+        """
+        try:
+            from config import get_settings
+            from supabase import create_client
+            settings = get_settings()
+            sb = create_client(settings.supabase_url, settings.supabase_service_role_key)
+            row = (
+                sb.table("research_reports")
+                .select("*")
+                .eq("id", report_id)
+                .eq("user_id", user_id)
+                .limit(1)
+                .execute()
+            )
+            return row.data[0] if row.data else None
+        except Exception:
+            return None
+
 
 # Singleton
 auto_researcher = AutoResearcher()

@@ -72,10 +72,13 @@ class RevisionClock:
             List of day dicts: [{date, tasks}]
         """
         from core.llm import llm
+        from engines.ape.study_time_predictor import study_time_predictor
 
         syllabus = await self._get_syllabus(institution_id)
         weak_topics = await self._get_weak_topics(user_id)
         strong_topics = await self._get_strong_topics(user_id)
+        peak_data = await study_time_predictor.predict(user_id)
+        peak_windows = peak_data.get("peak_windows") or ["morning", "evening"]
 
         syllabus_json = json.dumps(syllabus, indent=2) if syllabus else "Not available"
 
@@ -88,7 +91,7 @@ class RevisionClock:
                 weak_topics=json.dumps(weak_topics[:10]),
                 strong_topics=json.dumps(strong_topics[:10]),
             ),
-            user="Generate the revision schedule.",
+            user=f"Peak study windows for this student: {', '.join(peak_windows)}. Generate the revision schedule, scheduling difficult topics during these peak windows.",
             max_tokens=4096,
             temperature=0.3,
         )

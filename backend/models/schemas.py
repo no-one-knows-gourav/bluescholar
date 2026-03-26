@@ -1,7 +1,7 @@
 """Pydantic models for all API requests and responses."""
 
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, date
 from uuid import UUID
 
 
@@ -226,6 +226,94 @@ class ExamResponse(BaseModel):
     time_limit_mins: int
     opens_at: datetime | None = None
     closes_at: datetime | None = None
+
+
+# ─── MemoryTutor ────────────────────────────────────────────
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+
+class TutorChatRequest(BaseModel):
+    message: str
+    conversation: list[ChatMessage] = []
+
+
+# ─── WeakSpotter ────────────────────────────────────────────
+
+class WeakSpot(BaseModel):
+    concept: str
+    unit: int | None = None
+    score: float
+    attempt_count: int
+    last_updated: datetime
+
+
+class WeakSpotsResponse(BaseModel):
+    weak_spots: list[WeakSpot]
+
+
+class MockTopicScore(BaseModel):
+    topic: str
+    unit: int | None = None
+    score: float
+    max_score: float
+
+
+class MockSubmitResponse(BaseModel):
+    score: float
+    max_score: float
+    topic_breakdown: list[MockTopicScore]
+
+
+# ─── RevisionClock ──────────────────────────────────────────
+
+class RevisionGenerateRequest(BaseModel):
+    exam_date: date
+
+
+class RevisionTask(BaseModel):
+    topic: str
+    unit: int | None = None
+    duration_mins: int = 60
+    priority: str = "medium"
+    type: str = "study"
+
+
+class RevisionDay(BaseModel):
+    date: str
+    tasks: list[RevisionTask]
+
+
+class RevisionScheduleResponse(BaseModel):
+    schedule: list[RevisionDay]
+    exam_date: str
+
+
+class RebalanceRequest(BaseModel):
+    missed_dates: list[str]
+
+
+class TodoItem(BaseModel):
+    task_key: str
+    topic: str
+    unit: int | None = None
+    duration_mins: int = 60
+    priority: str = "medium"
+    type: str = "study"
+    status: str = "pending"
+
+
+class TodoListResponse(BaseModel):
+    date: str
+    todos: list[TodoItem]
+    completion_rate: float
+
+
+class UpdateTodoRequest(BaseModel):
+    task_key: str
+    status: str
 
 
 # ─── Readiness ──────────────────────────────────────────────

@@ -16,6 +16,15 @@ from models.schemas import (
     IngestPaperRequest,
     IngestPaperResponse,
     PatternMinerResponse,
+    TutorChatRequest,
+    WeakSpotsResponse,
+    MockSubmitRequest,
+    MockSubmitResponse,
+    RevisionGenerateRequest,
+    RevisionScheduleResponse,
+    RebalanceRequest,
+    TodoListResponse,
+    UpdateTodoRequest,
 )
 from engines.ace.chaos_cleaner import chaos_cleaner
 from engines.ace.syllabus_mapper import syllabus_mapper
@@ -24,6 +33,9 @@ from engines.ace.lecture_digest import lecture_digest
 from engines.ace.question_forge import question_forge
 from engines.ape.smart_mock import smart_mock
 from engines.ace.paper_pattern_miner import paper_pattern_miner
+from engines.lre.memory_tutor import memory_tutor
+from engines.ape.weak_spotter import weak_spotter
+from engines.ape.revision_clock import revision_clock
 
 router = APIRouter()
 
@@ -170,6 +182,140 @@ async def generate_mock(user: CurrentUser = Depends(get_current_user)):
         institution_id=user.institution_id or "",
     )
     return MockGenerateResponse(**result)
+
+
+@router.post("/mock/{mock_id}/submit", response_model=MockSubmitResponse)
+async def submit_mock(
+    mock_id: str,
+    body: MockSubmitRequest,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Grade a mock submission and update weak spots.
+
+    (Stub implementation — assumes a separate grading step computes scores,
+    then we pass those scores to the WeakSpotter.)
+    """
+    # STUB: Mocked grading logic
+    stub_topic_breakdown = [
+        {"topic": "Quantum States", "unit": 1, "score": 4.0, "max_score": 10.0},
+        {"topic": "Entanglement", "unit": 2, "score": 9.0, "max_score": 10.0},
+    ]
+
+    await weak_spotter.update_from_mock(user.user_id, stub_topic_breakdown)
+
+    return MockSubmitResponse(
+        score=13.0,
+        max_score=20.0,
+        topic_breakdown=stub_topic_breakdown,
+    )
+
+
+# ─── MemoryTutor ───────────────────────────────────────────
+
+@router.post("/tutor")
+async def chat_with_tutor(
+    body: TutorChatRequest,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Chat with the persistent MemoryTutor.
+
+    Streams a Sonnet response injected with a briefing of the student's
+    prior sessions and known weak spots.
+    """
+    conversation = [m.model_dump() for m in body.conversation]
+
+    return StreamingResponse(
+        memory_tutor.chat(
+            message=body.message,
+            user_id=user.user_id,
+            institution_id=user.institution_id or "",
+            conversation=conversation,
+        ),
+        media_type="text/event-stream",
+    )
+
+
+# ─── WeakSpotter ───────────────────────────────────────────
+
+@router.get("/weak-spots", response_model=WeakSpotsResponse)
+async def get_weak_spots(user: CurrentUser = Depends(get_current_user)):
+    """Retrieve the student's concept gap tracker, ordered weakest first."""
+    spots = await weak_spotter.get_weak_spots(user.user_id)
+    return WeakSpotsResponse(weak_spots=spots)
+
+
+# ─── RevisionClock ─────────────────────────────────────────
+
+@router.post("/schedule", response_model=RevisionScheduleResponse)
+async def generate_schedule(
+    body: RevisionGenerateRequest,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Generate a day-by-day revision schedule up to the exam date."""
+    schedule = await revision_clock.generate(
+        user_id=user.user_id,
+        institution_id=user.institution_id or "",
+        exam_date=body.exam_date,
+    )
+    return RevisionScheduleResponse(
+        schedule=schedule,
+        exam_date=str(body.exam_date),
+    )
+
+
+@router.get("/schedule", response_model=RevisionScheduleResponse)
+async def get_schedule(
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Retrieve the student's existing total revision schedule."""
+    data = await revision_clock.get_schedule(user.user_id)
+    return RevisionScheduleResponse(
+        schedule=data.get("schedule", []),
+        exam_date=data.get("exam_date", ""),
+    )
+
+
+@router.post("/schedule/rebalance", response_model=RevisionScheduleResponse)
+async def rebalance_schedule(
+    body: RebalanceRequest,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Redistribute incomplete tasks from missed days across future days."""
+    schedule = await revision_clock.rebalance(
+        user.user_id,
+        body.missed_dates,
+    )
+    # Re-fetch to get exam_date
+    data = await revision_clock.get_schedule(user.user_id)
+    return RevisionScheduleResponse(
+        schedule=schedule,
+        exam_date=data.get("exam_date", ""),
+    )
+
+
+@router.get("/todos", response_model=TodoListResponse)
+async def get_today_todos(
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Get the dynamic daily to-do list derived from the master schedule.
+    Automatically seeds today's rows if it's a new day.
+    """
+    result = await revision_clock.get_today_todos(user.user_id)
+    return TodoListResponse(**result)
+
+
+@router.patch("/todos", response_model=TodoListResponse)
+async def update_todo_status(
+    body: UpdateTodoRequest,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Mark a daily to-do item as done, skipped, or pending."""
+    result = await revision_clock.update_todo_status(
+        user.user_id,
+        body.task_key,
+        body.status,
+    )
+    return TodoListResponse(**result)
 
 
 # ─── PaperPatternMiner ─────────────────────────────────────

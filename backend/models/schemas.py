@@ -399,3 +399,30 @@ class ExamQuestionPayload(BaseModel):
 class EvaluateRequest(BaseModel):
     image_keys: list[str]   # R2 keys of scanned script pages
     questions: list[ExamQuestionPayload]
+
+
+# ─── Week 7: Readiness + Calibrator ────────────────────────
+
+class ReadinessResponse(BaseModel):
+    score: float
+    mock_component: float
+    gap_component: float
+    consistency_component: float
+    coverage_component: float
+    days_to_exam: int = 999
+
+
+class ApproveSubmissionRequest(BaseModel):
+    override_score: float | None = None
+    comment: str | None = None
+
+
+class CalibrateRequest(BaseModel):
+    exam_id: str | None = None  # optional — if None, calibrates full question bank
+
+
+class CalibrateResponse(BaseModel):
+    difficulty_score: float
+    bloom_distribution: dict[str, float]
+    total_questions: int
+    recommended_adjustments: list[str]

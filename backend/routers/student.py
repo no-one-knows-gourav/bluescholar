@@ -361,15 +361,17 @@ async def ingest_paper(
 
 @router.get("/readiness", response_model=ReadinessResponse)
 async def get_readiness(user: CurrentUser = Depends(get_current_user)):
-    """Get the student's current readiness score (stub)."""
-    # TODO: Pull real data from Supabase once mocks/weak_spots/sessions are built
-    return ReadinessResponse(
-        score=0.0,
-        mock_component=0.0,
-        gap_component=0.0,
-        consistency_component=0.0,
-        coverage_component=0.0,
+    """Compute real-time readiness score (Section 9 formula).
+
+    score = mock_avg*0.40 + gap_coverage*0.25 + consistency*0.20
+          + syllabus_coverage*0.15 - urgency_penalty
+    """
+    from engines.ape.readiness import readiness_engine
+    result = await readiness_engine.compute(
+        user_id=user.user_id,
+        institution_id=user.institution_id or "",
     )
+    return ReadinessResponse(**result)
 
 
 # ─── AutoResearcher ─────────────────────────────────────────
@@ -522,3 +524,51 @@ async def log_integrity_events(
     except Exception:
         pass
     return {"status": "logged", "event_count": len(body.events)}
+
+
+# ─── Past Research Reports ──────────────────────────────────
+
+@router.get("/research")
+async def list_research_reports(user: CurrentUser = Depends(get_current_user)):
+    """List past AutoResearcher reports for the student."""
+    try:
+        from config import get_settings
+        from supabase import create_client
+        settings = get_settings()
+        sb = create_client(settings.supabase_url, settings.supabase_service_role_key)
+        rows = (
+            sb.table("research_reports")
+            .select("id, topic, created_at")
+            .eq("user_id", user.user_id)
+            .order("created_at", desc=True)
+            .execute()
+        )
+        return {"reports": rows.data or []}
+    except Exception:
+        return {"reports": []}
+
+
+# ─── Mock Retrieval ─────────────────────────────────────────
+
+@router.get("/mock/{mock_id}")
+async def get_mock(
+    mock_id: str,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Retrieve a specific mock paper by ID."""
+    try:
+        from config import get_settings
+        from supabase import create_client
+        settings = get_settings()
+        sb = create_client(settings.supabase_url, settings.supabase_service_role_key)
+        row = (
+            sb.table("mocks")
+            .select("*")
+            .eq("id", mock_id)
+            .eq("user_id", user.user_id)
+            .limit(1)
+            .execute()
+        )
+        return row.data[0] if row.data else {"error": "Mock not found"}
+    except Exception:
+        return {"error": "Could not fetch mock"}

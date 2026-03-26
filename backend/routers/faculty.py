@@ -11,6 +11,9 @@ from models.schemas import (
     PlagueScopeResponse,
     GapFinderResponse,
     EvaluateRequest,
+    ApproveSubmissionRequest,
+    CalibrateRequest,
+    CalibrateResponse,
 )
 
 router = APIRouter()
@@ -246,3 +249,73 @@ async def list_reports(user: CurrentUser = Depends(get_current_user)):
         return {"reports": rows.data or []}
     except Exception:
         return {"reports": []}
+
+
+# ─── Submission Approval ────────────────────────────────────────────────────
+
+@router.get("/exams/{exam_id}/submissions")
+async def list_submissions(
+    exam_id: str,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """List all submissions for an exam with grading status."""
+    try:
+        from config import get_settings
+        from supabase import create_client
+        settings = get_settings()
+        sb = create_client(settings.supabase_url, settings.supabase_service_role_key)
+        rows = (
+            sb.table("exam_submissions")
+            .select("id, student_id, score, grading_status, submitted_at")
+            .eq("exam_id", exam_id)
+            .execute()
+        )
+        return {"exam_id": exam_id, "submissions": rows.data or []}
+    except Exception:
+        return {"exam_id": exam_id, "submissions": []}
+
+
+@router.post("/submissions/{submission_id}/approve")
+async def approve_submission(
+    submission_id: str,
+    body: ApproveSubmissionRequest,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Faculty sign-off on a graded submission (sets status → final).
+
+    Optionally override the AI-assigned score and add a comment.
+    """
+    update: dict = {"grading_status": "final"}
+    if body.override_score is not None:
+        update["score"] = body.override_score
+    if body.comment:
+        update["faculty_comment"] = body.comment
+    try:
+        from config import get_settings
+        from supabase import create_client
+        settings = get_settings()
+        sb = create_client(settings.supabase_url, settings.supabase_service_role_key)
+        sb.table("exam_submissions").update(update).eq("id", submission_id).execute()
+    except Exception:
+        pass
+    return {"submission_id": submission_id, "grading_status": "final", **update}
+
+
+# ─── Exam Difficulty Calibrator ─────────────────────────────────────────────
+
+@router.post("/calibrate", response_model=CalibrateResponse)
+async def calibrate_exam(
+    body: CalibrateRequest,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Analyse Bloom's taxonomy distribution and estimate exam difficulty.
+
+    Returns a 0–10 difficulty score, breakdown by Bloom's level,
+    and LLM-generated recommendations for the faculty.
+    """
+    from engines.iae.difficulty_calibrator import difficulty_calibrator
+    result = await difficulty_calibrator.calibrate(
+        institution_id=user.institution_id or "",
+        exam_id=body.exam_id,
+    )
+    return CalibrateResponse(**result)

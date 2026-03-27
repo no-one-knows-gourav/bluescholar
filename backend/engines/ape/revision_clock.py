@@ -47,6 +47,9 @@ Return ONLY this JSON — no markdown, no preamble:
     ]
   }
 ]
+
+Be concise. Answer in under 150 words unless the question requires more detail.
+Use bullet points only when listing 3+ distinct items.
 """
 
 
@@ -83,7 +86,7 @@ class RevisionClock:
         syllabus_json = json.dumps(syllabus, indent=2) if syllabus else "Not available"
 
         response = await llm.complete(
-            model="claude-sonnet-4-20250514",
+            model="claude-haiku-4-5",
             system=PLANNER_PROMPT.format(
                 syllabus=syllabus_json[:4000],
                 exam_date=str(exam_date),

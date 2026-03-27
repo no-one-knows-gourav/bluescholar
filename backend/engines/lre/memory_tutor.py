@@ -8,6 +8,8 @@ covered last time and which concepts are still unresolved.
 
 from typing import AsyncGenerator
 from core.llm import llm
+from core.vector import qdrant
+from core.embeddings import embeddings
 
 
 TUTOR_SYSTEM = """\
@@ -22,6 +24,9 @@ Your behaviour:
 4. End every response with a short "Next up: [concept]" to guide the student forward.
 5. Ground all explanations in the student's own uploaded course material when possible.
 6. Keep responses clear, concise, and conversational — this is a live study session.
+
+Be concise. Answer in under 150 words unless the question requires more detail.
+Use bullet points only when listing 3+ distinct items.
 """
 
 NO_HISTORY_CONTEXT = """\
@@ -62,8 +67,37 @@ class MemoryTutor:
         # 3. Build message history
         messages = list(conversation or [])
         messages.append({"role": "user", "content": message})
+        
+        # 4. Semantic Caching (Only for new session starts to retain context flow)
+        q_embedding = None
+        if len(messages) == 1:
+            q_embedding = await embeddings.embed(message)
+            try:
+                cache_results = await qdrant.search(
+                    collection=f"{institution_id}_semantic_cache",
+                    query=q_embedding,
+                    limit=1,
+                    score_threshold=0.92,
+                )
+                if cache_results and cache_results[0].payload.get("answer"):
+                    yield cache_results[0].payload["answer"]
+                    return
+            except Exception:
+                pass
+                
+        # 5. Token Compression (Strategy 8 - Mem0 equivalent)
+        if len(messages) > 10:
+            summary_prompt = "Summarise this chat history into a dense 200-token summary focusing on student gaps, concepts covered, and current trajectory. Be extremely concise."
+            summary_resp = await llm.complete(
+                model="claude-haiku-4-5",
+                system=summary_prompt,
+                user=str(messages[:-5])
+            )
+            system += f"\n\nPrior Conversation Summary:\n{summary_resp.text}"
+            messages = messages[-5:]
 
-        # 4. Stream response
+        # 6. Stream response
+        full_response = ""
         async for chunk in llm.stream(
             model="claude-sonnet-4-20250514",
             system=system,
@@ -71,9 +105,21 @@ class MemoryTutor:
             max_tokens=2048,
             temperature=0.5,
         ):
+            full_response += chunk
             yield chunk
 
-        # 5. Persist this exchange to chat_history (best-effort)
+        # 7. Save to semantic cache if it was a single query
+        if len(messages) == 1 and q_embedding:
+            try:
+                await qdrant.upsert(
+                    collection=f"{institution_id}_semantic_cache",
+                    vector=q_embedding,
+                    payload={"question": message, "answer": full_response}
+                )
+            except Exception:
+                pass
+
+        # 8. Persist this exchange to chat_history (best-effort)
         await self._save_history(user_id, message)
 
     async def get_session_context(self, user_id: str) -> str:

@@ -22,6 +22,9 @@ Rules:
 4. NEVER generate information that is not directly supported by the provided context.
 5. Keep answers concise and well-structured. Use bullet points for multi-part answers.
 6. When citing, always include the source filename and page number if available.
+
+Be concise. Answer in under 150 words unless the question requires more detail.
+Use bullet points only when listing 3+ distinct items.
 """
 
 NO_RESULTS_MSG = "✗ This question falls outside your uploaded course material. Upload more notes or course materials to expand my knowledge base."
@@ -51,7 +54,21 @@ class DocDoubt:
         # 1. Embed the question
         q_embedding = await embeddings.embed(question)
 
-        # 2. Search student notes AND faculty courseware
+        # 2. Check Semantic Cache
+        try:
+            cache_results = await qdrant.search(
+                collection=f"{institution_id}_semantic_cache",
+                query=q_embedding,
+                limit=1,
+                score_threshold=0.92,
+            )
+            if cache_results and cache_results[0].payload.get("answer"):
+                yield cache_results[0].payload["answer"]
+                return
+        except Exception:
+            pass
+
+        # 3. Search student notes AND faculty courseware
         student_results = await self._safe_search(
             collection=f"{institution_id}_{user_id}_notes",
             query=q_embedding,
@@ -63,7 +80,7 @@ class DocDoubt:
 
         all_results = student_results + faculty_results
 
-        # 3. If nothing found, yield the no-results message
+        # 4. If nothing found, yield the no-results message
         if not all_results:
             yield NO_RESULTS_MSG
             return
@@ -72,10 +89,20 @@ class DocDoubt:
         all_results.sort(key=lambda r: r.score, reverse=True)
         top_results = all_results[:8]
 
-        # 4. Build context with citations
+        # 5. Build context with citations
         context = self._build_context(top_results)
 
-        # 5. Build messages
+        # 5.5 LLMLingua Prompt Compression (Strategy 5)
+        try:
+            from llmlingua import PromptCompressor
+            if not hasattr(self, "_compressor"):
+                self._compressor = PromptCompressor(model_name="microsoft/llmlingua-2-xlm-roberta-large-meetingbank")
+            compressed: dict = self._compressor.compress_prompt(context, rate=0.33, force_tokens=["\n", "?", "[", "]"])
+            context = compressed.get("compressed_prompt", context)
+        except Exception:
+            pass
+
+        # 6. Build messages
         system = SYSTEM_PROMPT.format(
             student_name="Student",
             filename="{filename}",
@@ -90,13 +117,30 @@ class DocDoubt:
             "content": f"Context:\n{context}\n\nQuestion: {question}",
         })
 
-        # 6. Stream response
+        # 7. Prefill Assistant response
+        prefill_text = "Based on your uploaded material: "
+        messages.append({"role": "assistant", "content": prefill_text})
+        yield prefill_text
+
+        # 8. Stream response and capture for cache
+        full_response = prefill_text
         async for chunk in llm.stream(
             model="claude-sonnet-4-20250514",
             system=system,
             messages=messages,
         ):
+            full_response += chunk
             yield chunk
+
+        # 9. Save to Semantic Cache
+        try:
+            await qdrant.upsert(
+                collection=f"{institution_id}_semantic_cache",
+                vector=q_embedding,
+                payload={"question": question, "answer": full_response}
+            )
+        except Exception:
+            pass
 
     async def get_sources(
         self,

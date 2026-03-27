@@ -34,6 +34,32 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Rate Limiting Middleware (Strategy 13)
+    @app.middleware("http")
+    async def rate_limit_middleware(request, call_next):
+        if not request.url.path.startswith("/api/"):
+            return await call_next(request)
+        try:
+            import redis.asyncio as aioredis
+            from fastapi.responses import JSONResponse
+            # Fallback to local celery_broker if upstash is unavailable
+            r_url = settings.upstash_redis_url or settings.celery_broker_url
+            redis_client = aioredis.from_url(r_url)
+            
+            client_ip = request.client.host if request.client else "unknown"
+            key = f"rate_limit:{client_ip}"
+            
+            req_count = await redis_client.incr(key)
+            if req_count == 1:
+                await redis_client.expire(key, 60)
+                
+            if req_count > 100:  # Hard stop representing daily tier limits
+                return JSONResponse(status_code=429, content={"detail": "Tokens exhausted. Please wait."})
+        except Exception:
+            pass  # Fail open if redis is unreachable
+            
+        return await call_next(request)
+
     # Mount routers
     app.include_router(student.router, prefix="/api/v1/student", tags=["Student"])
     app.include_router(faculty.router, prefix="/api/v1/faculty", tags=["Faculty"])

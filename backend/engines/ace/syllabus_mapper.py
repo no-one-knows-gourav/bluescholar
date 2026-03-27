@@ -50,7 +50,15 @@ class SyllabusMapper:
             system=SYLLABUS_PARSE_PROMPT,
             user=syllabus_text[:8000],  # First 8k chars covers most syllabi
         )
-        parsed = json.loads(response.text)
+        # Strip markdown fences if the LLM wraps JSON in ```json ... ```
+        raw = response.text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("```", 2)[-1] if raw.count("```") >= 2 else raw
+            raw = raw.lstrip("json").strip().rstrip("`").strip()
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError:
+            return {"units": []}
 
         # 2. Embed each topic and upsert to Qdrant syllabus collection
         collection = f"{institution_id}_syllabus"

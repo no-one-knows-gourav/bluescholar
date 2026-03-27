@@ -175,8 +175,11 @@ class QuestionForge:
         if not questions:
             return 0
         try:
-            from db.client import db
-            await db.question_bank.insert_many(questions)
+            from config import get_settings
+            from supabase import create_client
+            settings = get_settings()
+            sb = create_client(settings.supabase_url, settings.supabase_service_role_key)
+            sb.table("question_bank").insert(questions).execute()
             return len(questions)
         except Exception:
             # Supabase persistence is best-effort; questions are still returned

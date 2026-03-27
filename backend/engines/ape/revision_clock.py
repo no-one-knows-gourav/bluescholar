@@ -96,8 +96,15 @@ class RevisionClock:
             temperature=0.3,
         )
 
+        # Strip markdown fences if LLM wraps JSON in ```json ... ```
+        raw = response.text.strip()
+        if raw.startswith("```"):
+            parts = raw.split("```")
+            raw = parts[1].lstrip("json").strip() if len(parts) >= 2 else raw
         try:
-            schedule = json.loads(response.text)
+            schedule = json.loads(raw)
+            if not isinstance(schedule, list):
+                schedule = []
         except json.JSONDecodeError:
             schedule = []
 

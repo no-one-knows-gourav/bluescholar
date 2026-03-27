@@ -1,7 +1,6 @@
 """Unified LLM client factory — Anthropic primary, OpenAI fallback."""
 
 from typing import AsyncGenerator
-import anthropic
 from config import get_settings
 
 
@@ -17,12 +16,20 @@ class LLMClient:
     """Manages LLM calls through Anthropic's API.
 
     Supports both one-shot completions and streaming.
-    System prompt caching is enabled by default for supported models.
+    The Anthropic client is created lazily on first use so that importing
+    this module does not crash when ANTHROPIC_API_KEY is absent.
     """
 
     def __init__(self):
-        settings = get_settings()
-        self._anthropic = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+        self._anthropic = None
+
+    def _get_client(self):
+        """Return the AsyncAnthropic client, creating it once."""
+        if self._anthropic is None:
+            import anthropic
+            settings = get_settings()
+            self._anthropic = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+        return self._anthropic
 
     async def complete(
         self,
@@ -33,7 +40,7 @@ class LLMClient:
         temperature: float = 0.3,
     ) -> LLMResponse:
         """Single-turn completion. Returns full text."""
-        response = await self._anthropic.messages.create(
+        response = await self._get_client().messages.create(
             model=model,
             max_tokens=max_tokens,
             temperature=temperature,
@@ -62,7 +69,7 @@ class LLMClient:
         if messages is None:
             messages = [{"role": "user", "content": user or ""}]
 
-        async with self._anthropic.messages.stream(
+        async with self._get_client().messages.stream(
             model=model,
             max_tokens=max_tokens,
             temperature=temperature,
@@ -81,7 +88,7 @@ class LLMClient:
         temperature: float = 0.3,
     ) -> LLMResponse:
         """Multi-turn completion with full message history."""
-        response = await self._anthropic.messages.create(
+        response = await self._get_client().messages.create(
             model=model,
             max_tokens=max_tokens,
             temperature=temperature,
@@ -98,5 +105,5 @@ class LLMClient:
         )
 
 
-# Singleton
+# Singleton — Anthropic client created lazily on first call
 llm = LLMClient()

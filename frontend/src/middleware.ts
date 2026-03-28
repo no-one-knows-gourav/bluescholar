@@ -30,7 +30,7 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // Public routes — no auth required
-  const publicRoutes = ["/", "/login", "/register"];
+  const publicRoutes = ["/", "/login", "/register", "/student/dashboard"];
   if (publicRoutes.includes(path)) {
     return response;
   }

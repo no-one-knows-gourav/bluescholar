@@ -1,166 +1,343 @@
 "use client";
 
-import PageShell from "@/components/layout/PageShell";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import s from "./dashboard.module.css";
 import {
-  Plus,
-  BookOpen,
-  CheckCircle2,
-  Clock,
-  ArrowRight,
-  TrendingUp,
-  Brain,
-  Timer,
-  FileText,
-  Sparkles,
-  ChevronRight
+  User, Menu, Pencil, Search, ChevronLeft, ChevronRight,
+  ArrowUpRight, Clock, AlarmClock, Timer, Hourglass,
+  MessageSquare, AlignLeft, Microscope, BookOpen, ClipboardList,
+  FolderPlus, Headphones, StickyNote, HelpCircle,
+  History, Target, BarChart2, PieChart, ListTree, Camera
 } from "lucide-react";
+import {
+  fetchProfile, fetchContentManager, fetchStudyPlanner,
+  fetchTimer, fetchAnalytics,
+  type Profile, type ContentManagerData, type StudyPlannerData,
+  type TimerData, type AnalyticsData,
+} from "@/lib/dashboardApi";
 
+/* ── icon maps ── */
+const CM_ICONS: Record<string, React.ElementType> = {
+  "Ask Assistant": MessageSquare,
+  "Summarize": AlignLeft,
+  "AutoResearch": Microscope,
+  "View Syllabus": BookOpen,
+  "Generate Mock": ClipboardList,
+  "Create Exam Folder": FolderPlus,
+  "Digest Lectures": Headphones,
+  "Quick Notes": StickyNote,
+  "Practice Questions": HelpCircle,
+};
+
+const ANALYSIS_ICONS: Record<string, React.ElementType> = {
+  "Ask Assistant": MessageSquare,
+  "History": History,
+  "Readiness": Target,
+  "Mock Analysis": BarChart2,
+  "Subject-wise": PieChart,
+  "Topic-wise": ListTree,
+};
+
+/* ── helpers ── */
+const DAYS_HEADER = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function buildCalendar(month: number, year: number) {
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const weeks: (number | null)[][] = [];
+  let week: (number | null)[] = Array(7).fill(null);
+  let day = 1;
+  for (let i = firstDay; i < 7 && day <= daysInMonth; i++) week[i] = day++;
+  weeks.push(week);
+  while (day <= daysInMonth) {
+    week = Array(7).fill(null);
+    for (let i = 0; i < 7 && day <= daysInMonth; i++) week[i] = day++;
+    weeks.push(week);
+  }
+  return weeks;
+}
+
+/* ── SVG helpers ── */
+function FolderSvg() {
+  return (
+    <svg className={s.folderIcon} viewBox="0 0 40 32" fill="none">
+      <path d="M2 4a4 4 0 0 1 4-4h10l4 4h16a4 4 0 0 1 4 4v20a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V4z" fill="#1788ED" />
+    </svg>
+  );
+}
+
+function DonutChart({ value, label }: { value: number; label: string }) {
+  const r = 16, circ = 2 * Math.PI * r;
+  const offset = circ * (1 - value / 100);
+  return (
+    <div className={s.donutWrap}>
+      <svg className={s.donutSvg} viewBox="0 0 38 38">
+        <circle className={s.donutTrack} cx="19" cy="19" r={r} />
+        <circle className={s.donutFill} cx="19" cy="19" r={r}
+          strokeDasharray={`${circ - offset} ${offset}`} />
+      </svg>
+      <div className={s.donutValue}>{value}%</div>
+      <div className={s.donutLabel}>{label}</div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════ */
 export default function StudentDashboard() {
-  const stats = [
-    { label: "Syllabus Coverage", value: "68%", sub: "+12.4% this week", icon: BookOpen, color: "var(--blue)", bg: "rgba(30, 111, 217, 0.15)", modifier: "blue" },
-    { label: "AI Readiness Score", value: "B+", sub: "Verified for Midterms", icon: Brain, color: "var(--teal)", bg: "rgba(13, 148, 136, 0.15)", modifier: "teal" },
-    { label: "Docs Processed", value: "24", sub: "182 pages analyzed", icon: FileText, color: "var(--success)", bg: "rgba(5, 150, 105, 0.15)", modifier: "success" },
-    { label: "Active Streak", value: "5 Days", sub: "Personal Best: 12", icon: Sparkles, color: "var(--gold)", bg: "rgba(217, 119, 6, 0.15)", modifier: "gold" },
-  ];
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [cm, setCm] = useState<ContentManagerData | null>(null);
+  const [planner, setPlanner] = useState<StudyPlannerData | null>(null);
+  const [timer, setTimerData] = useState<TimerData | null>(null);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [clockTab, setClockTab] = useState("time");
+  const [plannerView, setPlannerView] = useState("daily");
+  const [activeAnalysis, setActiveAnalysis] = useState("Readiness");
+  const [bannerImg, setBannerImg] = useState<string | null>("/dashboard-banner.png");
+
+  useEffect(() => {
+    fetchProfile().then(setProfile);
+    fetchContentManager().then(setCm);
+    fetchStudyPlanner().then(setPlanner);
+    fetchTimer().then(setTimerData);
+    fetchAnalytics().then(setAnalytics);
+  }, []);
+
+  const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setBannerImg(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const weeks = buildCalendar(5, 2025); // June = month 5
 
   return (
-    <PageShell
-      title="Dashboard"
-      subtitle="Welcome back, Alex. Your learning engine is primed."
-      actions={
-        <div style={{ display: "flex", gap: "12px" }}>
-          <Button variant="outline" className="btn btn-secondary">
-            View Analytics
-          </Button>
-          <Button className="btn btn-primary">
-            <Plus className="w-4 h-4" />
-            Upload Document
-          </Button>
-        </div>
-      }
-    >
-      <div className="grid-4" style={{ marginBottom: "24px" }}>
-        {/* Welcome Block - Full Width */}
-        <div style={{ gridColumn: "span 3" }} className="card">
-          <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "center", position: "relative", zIndex: 10 }}>
-            <h1 style={{ fontSize: "32px", fontWeight: "bold", lineHeight: 1.2, margin: 0 }}>
-              Ready to crush Unit 3? <br />
-              <span style={{ color: "var(--blueLight)", fontSize: "28px" }}>Neural Networks are waiting.</span>
-            </h1>
-            <p style={{ marginTop: "16px", color: "var(--slateLight)", fontSize: "16px", maxWidth: "600px" }}>
-              Your overall readiness is B+. Complete today&apos;s 2 practice sets to hit A-.
-            </p>
-            <div style={{ display: "flex", gap: "16px", marginTop: "24px", paddingTop: "24px" }}>
-              <Button className="btn btn-primary" style={{ padding: "12px 24px" }}>
-                Start Session
-                <ArrowRight className="w-4 h-4" style={{ marginLeft: "8px" }} />
-              </Button>
-            </div>
-          </div>
-        </div>
+    <div className={s.dashboard}>
+      {/* ═══ BANNER ═══ */}
+      <section className={s.banner}>
+        {bannerImg && <img src={bannerImg} alt="banner" className={s.bannerImg} />}
+        <div className={s.bannerOverlay} />
+        
+        <label className={s.bannerUploadBtn}>
+          <Camera size={12} />
+          <span>Change Cover</span>
+          <input 
+            type="file" 
+            accept="image/*" 
+            onChange={handleBannerUpload} 
+            style={{ display: "none" }} 
+          />
+        </label>
 
-        {/* AI Quick Assistant */}
-        <div className="card" style={{ display: "flex", flexDirection: "column", height: "100%", background: "var(--navy)" }}>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
-              <div style={{ width: "40px", height: "40px", borderRadius: "8px", background: "var(--blue)", display: "flex", alignItems: "center", justifyContent: "center", color: "white" }}>
-                <Brain className="w-5 h-5" />
-              </div>
-              <div>
-                <p style={{ fontSize: "14px", fontWeight: "bold", margin: 0, color: "white" }}>Scholar Chat</p>
-                <p style={{ fontSize: "10px", color: "var(--blueLight)", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>Active Intelligence</p>
-              </div>
-            </div>
-            <div style={{ flex: 1, background: "rgba(255,255,255,0.05)", borderRadius: "12px", padding: "16px", fontSize: "12px", color: "rgba(255,255,255,0.7)", fontStyle: "italic", lineHeight: 1.5 }}>
-              &quot;I noticed you struggled with Backpropagation. Should we generate a 5-minute summary?&quot;
-            </div>
-            <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
-              <input
-                placeholder="Ask anything..."
-                style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "none", borderRadius: "8px", padding: "10px 16px", fontSize: "12px", color: "white", outline: "none", fontFamily: "inherit" }}
-              />
-              <Button size="icon" style={{ background: "var(--blue)", color: "white", border: "none", borderRadius: "8px", width: "40px", height: "40px", flexShrink: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
+        <div className={s.searchWrap}>
+          <div className={s.searchBox}>
+            <Search size={12} style={{ color: "rgba(255,255,255,0.45)", flexShrink: 0 }} />
+            <input placeholder="Search" />
           </div>
+        </div>
+        <div className={s.bannerGlow} />
+      </section>
+
+      {/* ═══ PROFILE ═══ */}
+      <div className={s.profileRow}>
+        <div className={s.avatar}>
+          <User size={24} />
+        </div>
+        <h2 className={s.profileName}>{profile?.name ?? "Bhavya Bharadwaj"}</h2>
+        <div className={s.profileActions}>
+          <button className={s.iconBtn}><Menu size={16} /></button>
+          <button className={s.iconBtn}><Pencil size={14} /></button>
         </div>
       </div>
 
-      {/* Stats Row */}
-      <div className="grid-4" style={{ marginBottom: "24px" }}>
-        {stats.map((stat, i) => (
-          <div key={i} className={`stat-card ${stat.modifier}`}>
-            <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: stat.bg, color: stat.color, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px" }}>
-              <stat.icon className="w-6 h-6" />
+      {/* ═══ MAIN GRID (Now Flexbox Horizontal Wrapping) ═══ */}
+      <div className={s.mainGrid}>
+        
+        {/* ── LEFT: Study Planner ── */}
+        <div className={s.col} style={{ flex: "1.6 1 0%" }}>
+          <div className={s.card}>
+            <div className={s.cardHeader}>
+              <h4 className={s.cardTitle}>Injective Study Planner</h4>
+              <button className={s.expandLink}>
+                Expand <ArrowUpRight size={12} />
+              </button>
             </div>
-            <p className="stat-label">{stat.label}</p>
-            <h2 className="stat-value">{stat.value}</h2>
-            <p style={{ fontSize: "12px", color: "var(--slateLight)", margin: 0 }}>{stat.sub}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid-2">
-        {/* Intelligence Pulse Chart Placeholder */}
-        <div className="card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-            <div>
-              <h2 className="card-title" style={{ margin: 0, fontSize: "20px" }}>Intelligence Pulse</h2>
-              <p style={{ fontSize: "10px", color: "var(--slateLight)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "bold", margin: "4px 0 0" }}>Learning consistency last 14 days</p>
-            </div>
-            <span style={{ fontSize: "12px", fontWeight: "bold", background: "rgba(30, 111, 217, 0.15)", padding: "4px 10px", borderRadius: "8px", color: "var(--blue)" }}>+24%</span>
-          </div>
-          <div style={{ height: "192px", width: "100%", background: "rgba(255,255,255,0.02)", borderRadius: "12px", display: "flex", alignItems: "flex-end", padding: "16px 16px 0", gap: "8px" }}>
-            {[40, 60, 45, 90, 65, 80, 50, 70, 85, 95, 60, 75].map((h, i) => (
-              <div key={i} style={{ flex: 1, background: "rgba(30, 111, 217, 0.3)", height: `${h}%`, borderRadius: "8px 8px 0 0", transition: "all 0.2s" }} />
-            ))}
-          </div>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-          {/* Focus Timer */}
-          <div className="card" style={{ flex: 0, position: "relative", overflow: "hidden", background: "rgba(30, 111, 217, 0.1)" }}>
-            <span style={{ background: "rgba(30, 111, 217, 0.2)", color: "var(--blue)", padding: "4px 10px", borderRadius: "6px", fontSize: "10px", fontWeight: "bold", display: "inline-block", marginBottom: "16px" }}>FOCUS MODE</span>
-            <h3 style={{ fontSize: "24px", fontWeight: "bold", color: "var(--blueLight)", lineHeight: 1.2, margin: 0 }}>Deep Work <br />Session</h3>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "32px" }}>
-              <div style={{ fontSize: "36px", fontFamily: "monospace", fontWeight: "bold", color: "white", letterSpacing: "-1px" }}>25:00</div>
-              <Button size="icon" style={{ background: "var(--blue)", color: "white", borderRadius: "12px", height: "48px", width: "48px", border: "none" }}>
-                <Timer className="w-6 h-6" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Resource Feed */}
-          <div className="card" style={{ flex: 1 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <h2 className="card-title" style={{ margin: 0, fontSize: "18px" }}>Recent Intelligence</h2>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {[
-                { name: "Unit 3 Flashcards", type: "Generated", icon: Brain, color: "var(--teal)", bg: "rgba(13, 148, 136, 0.1)" },
-                { name: "Algorithms Summary", type: "PDF Parse", icon: FileText, color: "var(--success)", bg: "rgba(5, 150, 105, 0.1)" },
-                { name: "Mock Test #4 Results", type: "Review", icon: CheckCircle2, color: "var(--blue)", bg: "rgba(30, 111, 217, 0.1)" },
-              ].map((feed, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px", borderRadius: "12px", background: "rgba(255,255,255,0.03)" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: feed.bg, color: feed.color, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <feed.icon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p style={{ fontSize: "14px", fontWeight: "bold", margin: 0, color: "white" }}>{feed.name}</p>
-                      <p style={{ fontSize: "10px", color: "var(--slateLight)", margin: 0 }}>{feed.type}</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4" style={{ color: "rgba(255,255,255,0.2)" }} />
+            <div className={s.plannerBody}>
+              {/* Calendar */}
+              <div className={s.calendarSection}>
+                <div className={s.calendarNav}>
+                  <button className={s.calNavBtn}><ChevronLeft size={12} /></button>
+                  <span className={s.calMonth}>June 2025</span>
+                  <button className={s.calNavBtn}><ChevronRight size={12} /></button>
                 </div>
+                <div className={s.calGrid}>
+                  {DAYS_HEADER.map((d) => (
+                    <div key={d} className={s.calDayHeader}>{d}</div>
+                  ))}
+                  {weeks.flat().map((day, i) => {
+                    if (day === null) return <div key={`e${i}`} className={`${s.calDay} ${s.calDayEmpty}`} />;
+                    const sel = day === planner?.selectedDate;
+                    const hi = planner?.highlightedDates.includes(day);
+                    return (
+                      <div key={i} className={[
+                        s.calDay,
+                        sel ? s.calDaySelected : "",
+                        hi ? s.calDayHighlighted : "",
+                      ].join(" ")}>
+                        {day}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className={s.plannerFooter}>
+                  <button className={s.btnPrimary} style={{ width: "100%" }}>View Events</button>
+                  <button className={s.btnPrimary} style={{ width: "100%" }}>Schedule Events</button>
+                </div>
+              </div>
+
+              {/* Right: Select dropdown + todos */}
+              <div className={s.plannerRight}>
+                <select 
+                  className={s.plannerSelect}
+                  value={plannerView}
+                  onChange={(e) => setPlannerView(e.target.value)}
+                >
+                  <option value="daily">Daily Planner</option>
+                  <option value="weekly">Weekly Planner</option>
+                  <option value="monthly">Monthly Planner</option>
+                </select>
+                <div className={s.plannerLabel}>To-do List</div>
+                <div className={s.todoList}>
+                  {planner?.todos.map((td) => (
+                    <div key={td.id} className={s.todoItem}>
+                      <div className={s.todoCircle} />
+                      <span>{td.text}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className={s.plannerButtons}>
+                  <button className={s.btnPrimary}>Edit Planner</button>
+                  <button className={s.btnPrimary}>Mark as Complete</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── CENTER: Content Manager ── */}
+        <div className={s.col} style={{ flex: "2.2 1 0%" }}>
+          <div className={s.card}>
+            <div className={s.cardHeader}>
+              <h4 className={s.cardTitle}>Content manager</h4>
+              <button className={s.expandLink}>
+                Expand <ArrowUpRight size={12} />
+              </button>
+            </div>
+            <div className={s.cmBody}>
+              <div className={s.cmSidebar}>
+                {cm?.tools.map((t) => {
+                  const Icon = CM_ICONS[t] || MessageSquare;
+                  return (
+                    <div key={t} className={s.cmTool}>
+                      <span className={s.cmToolIcon}><Icon size={10} /></span>
+                      {t}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className={s.cmFolderGrid}>
+                {cm?.courses.map((c) => (
+                  <div key={c.id} className={s.cmFolder}>
+                    <FolderSvg />
+                    <span className={s.folderName}>{c.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className={s.cmFooter}>
+              <button className={s.btnPrimary} style={{ width: "200px" }}>View File Manager</button>
+              <button className={s.btnPrimary} style={{ width: "200px" }}>Upload Material</button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── RIGHT: Clock + Analysis ── */}
+        <div className={s.col} style={{ flex: "1.1 1 0%" }}>
+          {/* Timer Card */}
+          <div className={s.card} style={{ flex: "0.8 1 0%", justifyContent: "center" }}>
+            <div className={s.clockTabs}>
+              {[
+                { id: "time", label: "Time", Icon: Clock },
+                { id: "alarm", label: "Alarm", Icon: AlarmClock },
+                { id: "timer", label: "Timer", Icon: Timer },
+                { id: "stopwatch", label: "Stopwatch", Icon: Hourglass },
+              ].map(({ id, label, Icon }) => (
+                <button key={id}
+                  className={`${s.clockTab} ${clockTab === id ? s.clockTabActive : ""}`}
+                  onClick={() => setClockTab(id)}
+                >
+                  <Icon size={8} />
+                  {label}
+                </button>
               ))}
             </div>
+            <div className={s.clockDisplay}>{timer?.display ?? "10:10:10"}</div>
+            <div className={s.clockButtons}>
+              <button className={s.btnPrimary} style={{ width: "100%" }}>Record Session</button>
+              <button className={s.btnPrimary} style={{ width: "100%" }}>Enable Focus Sync</button>
+            </div>
+          </div>
+
+          {/* Analysis */}
+          <div className={s.card} style={{ flex: "1.2 1 0%" }}>
+            <div className={s.cardHeader}>
+              <h4 className={s.cardTitle}>Analysis</h4>
+              <button className={s.expandLink}>
+                Expand <ArrowUpRight size={12} />
+              </button>
+            </div>
+            <div className={s.analysisBody}>
+              <div className={s.analysisSidebar}>
+                {analytics?.categories.map((cat) => {
+                  const Icon = ANALYSIS_ICONS[cat] || BarChart2;
+                  return (
+                    <div key={cat}
+                      className={`${s.analysisSidebarItem} ${activeAnalysis === cat ? s.analysisSidebarItemActive : ""}`}
+                      onClick={() => setActiveAnalysis(cat)}
+                    >
+                      <Icon size={8} />
+                      {cat}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className={s.analysisContent}>
+                <div className={s.donutRow}>
+                  <DonutChart value={analytics?.readiness ?? 67} label="Readiness" />
+                  <DonutChart value={analytics?.completed ?? 20} label="Completed" />
+                </div>
+                <div className={s.barChartWrap}>
+                  <div className={s.barChartLabel}>Engagement History</div>
+                  <div className={s.barChart}>
+                    {(analytics?.engagementHistory || [40, 65, 50, 80, 55, 70, 45]).map((h, i) => (
+                      <div key={i} className={s.bar} style={{ height: `${h}%` }} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style={{ marginTop: 'auto', paddingTop: '10px' }}>
+              <button className={`${s.btnPrimary} ${s.clockFullBtn}`}>
+                View Session History
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </PageShell>
+    </div>
   );
 }
